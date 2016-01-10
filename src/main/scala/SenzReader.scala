@@ -1,5 +1,6 @@
 import java.net.DatagramSocket
-import akka.actor.{Actor, Props}
+
+import akka.actor.Actor
 
 case class InitReader(socket: DatagramSocket)
 
@@ -10,14 +11,15 @@ class SenzReader extends Actor {
 
   override def receive: Receive = {
     case InitReader(socket) => {
+      // find sender actor
+      val senzSender = context.actorSelection("../SenzSender")
+
       // read user input from the command line
       while (true) {
         val input = scala.io.StdIn.readLine()
         println("Input senz: " + input)
 
-        // send senz via actor
-        val sender = context.actorOf(Props(new SenzSender))
-        sender ! Send(socket, input)
+        senzSender ! Send(socket, input)
       }
     }
   }

@@ -11,11 +11,14 @@ object SenzClient extends App {
 
   val sock = new DatagramSocket()
 
-  // Initialize senz listener
+  // initialize actors
   val senzListener = system.actorOf(Props[SenzListener], name = "SenzListener")
-  senzListener ! InitListener(sock)
-
-  // initialize senz reader
+  val senzSender = system.actorOf(Props[SenzSender], name = "SenzSender")
   val senzReader = system.actorOf(Props[SenzReader], name = "SenzReader")
+
+  // Send initial messages to actors
+  senzListener ! InitListener(sock)
+  senzSender ! Init
   senzReader ! InitReader(sock)
+
 }

@@ -10,6 +10,7 @@ case class InitListener(socket: DatagramSocket)
 class SenzListener extends Actor {
   override def receive: Receive = {
     case InitListener(socket) => {
+
       val bufSize = 1024
       val buf = new Array[Byte](bufSize)
       val host = InetAddress.getByName("10.4.1.29")
@@ -31,6 +32,8 @@ class SenzListener extends Actor {
         println("received--: " + text)
 
         // TODO handle received senz via a actor
+        val senzSender = context.actorSelection("../SenzSender")
+        senzSender ! Send(socket, msg)
       }
     }
   }

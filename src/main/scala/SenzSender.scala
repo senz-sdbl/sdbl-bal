@@ -1,7 +1,10 @@
-import java.net.{DatagramPacket, InetAddress, DatagramSocket}
+import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
-import akka.actor.{ReceiveTimeout, Actor}
+import akka.actor.{Actor, ReceiveTimeout}
+
 import scala.concurrent.duration._
+
+case class Init()
 
 case class Send(socket: DatagramSocket, msg: String)
 
@@ -9,16 +12,20 @@ case class Send(socket: DatagramSocket, msg: String)
  * Created by eranga on 1/10/16.
  */
 class SenzSender extends Actor {
-  context.setReceiveTimeout(5 seconds)
-
   override def receive: Receive = {
+    case Init =>
+      // init function
+      println("init sender")
     case Send(socket, msg) =>
+      context.setReceiveTimeout(5 seconds)
+      println("send message")
       // TODO validate sign, encrypt the senz
 
       sendSenz(msg, socket)
     case ReceiveTimeout =>
       //resend message
       //sendSenz()
+      println("timeout")
   }
 
   def sendSenz(msg: String, socket: DatagramSocket) = {
