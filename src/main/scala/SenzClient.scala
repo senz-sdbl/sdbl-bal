@@ -1,24 +1,36 @@
 import java.net.DatagramSocket
 
 import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 /**
  * Created by eranga on 1/9/16.
  */
 object SenzClient extends App {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   implicit val system = ActorSystem("senz")
 
-  val sock = new DatagramSocket()
+  val socket = new DatagramSocket()
 
   // initialize actors
-  val senzListener = system.actorOf(Props[SenzListener], name = "SenzListener")
-  val senzSender = system.actorOf(Props[SenzSender], name = "SenzSender")
+  val senzSender = system.actorOf(Props(classOf[SenzSender], socket), name = "SenzSender")
+  val senzListener = system.actorOf(Props(classOf[SenzListener], socket), name = "SenzListener")
   val senzReader = system.actorOf(Props[SenzReader], name = "SenzReader")
 
-  // Send initial messages to actors
-  senzListener ! InitListener(sock)
-  senzSender ! Init
-  senzReader ! InitReader(sock)
-
+  // init sender and wait until its success   
+  implicit val timeout = Timeout(5 seconds)
+  val future = senzSender ? Init
+  future onComplete {
+    case Success(result) =>
+      // start listener and reader
+      senzListener ! InitListener
+      senzReader ! InitReader
+    case Failure(result) =>
+      println("init fails")
+  }
 }
