@@ -1,6 +1,6 @@
 import java.net.{DatagramPacket, DatagramSocket}
 
-import akka.actor.Actor
+import akka.actor.{Actor, Props}
 
 case class InitListener()
 
@@ -22,9 +22,9 @@ class SenzListener(socket: DatagramSocket) extends Actor {
         val text = new String(senzIn.getData)
         println("received--: " + text)
 
-        // TODO handle received senz via a actor
-        //val senzSender = context.actorSelection("../SenzSender")
-        //senzSender ! Send("msg")
+        // handle received senz via a actor
+        val senzHandler = context.actorOf(Props(new SenzHandler))
+        senzHandler ! text
       }
     }
   }

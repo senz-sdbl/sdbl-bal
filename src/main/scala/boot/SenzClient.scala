@@ -1,8 +1,11 @@
+package boot
+
 import java.net.DatagramSocket
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 

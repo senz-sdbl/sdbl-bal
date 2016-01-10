@@ -5,7 +5,7 @@ case class InitReader()
 /**
  * Created by eranga on 1/9/16.
  */
-class SenzReader() extends Actor {
+class SenzReader extends Actor {
 
   override def receive: Receive = {
     case InitReader => {

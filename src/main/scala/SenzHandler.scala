@@ -5,8 +5,13 @@ import akka.actor.Actor
  */
 class SenzHandler extends Actor {
 
-  override def receive: Receive = {
-    case msg =>
+  val senzSender = context.actorSelection("../../SenzSender")
 
+  override def receive: Receive = {
+    case msg: String =>
+      // handle message
+      println("handle message")
+
+      //senzSender ! Send("yahooo")
   }
 }
