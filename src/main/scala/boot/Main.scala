@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 /**
  * Created by eranga on 1/9/16.
  */
-object SenzClient extends App {
+object Main extends App {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

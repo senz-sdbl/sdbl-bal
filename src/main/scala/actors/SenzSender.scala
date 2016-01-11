@@ -3,6 +3,7 @@ package actors
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
 import akka.actor.{Actor, ReceiveTimeout}
+import config.Configuration
 
 import scala.concurrent.duration._
 
@@ -17,7 +18,7 @@ case class InitFail()
 /**
  * Created by eranga on 1/10/16.
  */
-class SenzSender(socket: DatagramSocket) extends Actor {
+class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
   override def receive: Receive = {
     case InitSender =>
       // TODO send registration packet first
@@ -40,10 +41,7 @@ class SenzSender(socket: DatagramSocket) extends Actor {
   }
 
   def sendSenz(msg: String) = {
-    val host = InetAddress.getByName("10.4.1.29")
-    val port = 9999
-
-    val senzOut = new DatagramPacket(msg.getBytes, msg.getBytes.length, host, port)
+    val senzOut = new DatagramPacket(msg.getBytes, msg.getBytes.length, InetAddress.getByName(serviceHost), servicePort)
     socket.send(senzOut)
   }
 }
