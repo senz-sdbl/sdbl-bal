@@ -48,7 +48,7 @@ object SenzParser {
     Senz(senzType, sender, receiver, attr, signature)
   }
 
-  def getMessage(senz: Senz): String = {
+  def getSenzPayload(senz: Senz): String = {
     "eranga"
   }
 }
