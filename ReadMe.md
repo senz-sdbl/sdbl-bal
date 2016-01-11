@@ -9,4 +9,6 @@ Senz platform based SDBL balance client
 
 ## How to run via command line
 
+```
 sbt clean compile run
+```
