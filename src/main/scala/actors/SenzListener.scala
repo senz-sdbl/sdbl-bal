@@ -3,6 +3,7 @@ package actors
 import java.net.{DatagramPacket, DatagramSocket}
 
 import akka.actor.{Actor, Props}
+import utils.SenzParser
 
 case class InitListener()
 
@@ -21,12 +22,14 @@ class SenzListener(socket: DatagramSocket) extends Actor {
       // listen for udp socket in order to receive messages
       while (true) {
         socket.receive(senzIn)
-        val text = new String(senzIn.getData)
-        println("received--: " + text)
+        val msg = new String(senzIn.getData)
+        println("received--: " + msg)
 
         // handle received senz via a actor
+        // parse senz first
         val senzHandler = context.actorOf(Props(new SenzHandler))
-        senzHandler ! text
+        val senz = SenzParser.getSenz(msg)
+        senzHandler ! senz
       }
     }
   }
