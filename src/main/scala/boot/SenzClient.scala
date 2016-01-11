@@ -2,6 +2,7 @@ package boot
 
 import java.net.DatagramSocket
 
+import actors._
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -27,7 +28,7 @@ object SenzClient extends App {
 
   // init sender and wait until its success   
   implicit val timeout = Timeout(5 seconds)
-  val future = senzSender ? Init
+  val future = senzSender ? InitSender
   future onComplete {
     case Success(result) =>
       // start listener and reader

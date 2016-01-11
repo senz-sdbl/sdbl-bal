@@ -1,10 +1,12 @@
+package actors
+
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
 import akka.actor.{Actor, ReceiveTimeout}
 
 import scala.concurrent.duration._
 
-case class Init()
+case class InitSender()
 
 case class Send(msg: String)
 
@@ -17,7 +19,7 @@ case class InitFail()
  */
 class SenzSender(socket: DatagramSocket) extends Actor {
   override def receive: Receive = {
-    case Init =>
+    case InitSender =>
       // TODO send registration packet first
       val msg = "init"
       sendSenz(msg)

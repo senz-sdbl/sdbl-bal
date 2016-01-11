@@ -1,3 +1,5 @@
+package actors
+
 import java.net.{DatagramPacket, DatagramSocket}
 
 import akka.actor.{Actor, Props}
