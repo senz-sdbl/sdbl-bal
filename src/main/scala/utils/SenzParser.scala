@@ -2,7 +2,7 @@ package utils
 
 object SenzType extends Enumeration {
   type SenzType = Value
-  val SHARE, GET, DATA = Value
+  val SHARE, GET, DATA, PING = Value
 }
 
 import SenzType._
@@ -48,7 +48,6 @@ object SenzParser {
     Senz(senzType, sender, receiver, attr, signature)
   }
 
-  def getSenzPayload(senz: Senz): String = {
-    "eranga"
+  def getSenzPayload(senz: Senz) = {
   }
 }

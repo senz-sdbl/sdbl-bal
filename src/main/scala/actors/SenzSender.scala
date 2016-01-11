@@ -30,7 +30,7 @@ class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
       sender ! InitSuccess
     case Send(msg) =>
       context.setReceiveTimeout(5 seconds)
-      println("send message")
+      println("send message " + msg)
 
       // TODO validate sign, encrypt the senz
 

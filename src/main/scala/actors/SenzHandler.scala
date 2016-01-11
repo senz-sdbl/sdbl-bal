@@ -17,5 +17,8 @@ class SenzHandler extends Actor {
     case Senz(SenzType.DATA, _, _, _, _) =>
       println("handle message DATA")
       //senzSender ! Send("yahooo")
+    case Senz(SenzType.PING, _, _, _, _) =>
+      // handle message
+      println("handle message PING")
   }
 }
