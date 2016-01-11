@@ -1,4 +1,4 @@
-name := "udps"
+name := "sdbl-bal"
 
 version := "1.0"
 
