@@ -6,6 +6,7 @@ import actors._
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import crypto.RSAUtils
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -21,6 +22,9 @@ object Main extends App {
 
   val socket = new DatagramSocket()
 
+  // first generate key pair
+  RSAUtils.initRSAKeys()
+
   // initialize actors
   val senzSender = system.actorOf(Props(classOf[SenzSender], socket), name = "SenzSender")
   val senzListener = system.actorOf(Props(classOf[SenzListener], socket), name = "SenzListener")
@@ -34,7 +38,7 @@ object Main extends App {
     case Success(result) =>
       // start listener, ping sender and reader
       senzListener ! InitListener
-      pingSender ! Ping
+      //pingSender ! Ping
       senzReader ! InitReader
     case Failure(result) =>
       println("init fails")

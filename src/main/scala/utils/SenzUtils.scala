@@ -16,7 +16,7 @@ object SenzUtils extends Configuration {
     val unSignedSenzPayload = s"SHARE #pubkey $publicKey #time $timestamp @$receiver ^$sender"
 
     // sign senz
-    val senzSignature = RSAUtils.signSenz(unSignedSenzPayload)
+    val senzSignature = RSAUtils.signSenz(unSignedSenzPayload.replaceAll(" ", ""))
     s"$unSignedSenzPayload $senzSignature"
   }
 
@@ -28,7 +28,7 @@ object SenzUtils extends Configuration {
     val unSignedSenzPayload = s"PING #time $timestamp @$receiver ^$sender"
 
     // sign senz
-    val senzSignature = RSAUtils.signSenz(unSignedSenzPayload)
+    val senzSignature = RSAUtils.signSenz(unSignedSenzPayload.replaceAll(" ", ""))
     s"$unSignedSenzPayload $senzSignature"
   }
 }
