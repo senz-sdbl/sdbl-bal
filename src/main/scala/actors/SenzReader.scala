@@ -1,6 +1,7 @@
 package actors
 
-import akka.actor.Actor
+import actors.handlers.{Message, AgentRegistrationHandler}
+import akka.actor.{Props, Actor}
 import crypto.RSAUtils
 
 case class InitReader()
@@ -12,9 +13,6 @@ class SenzReader extends Actor {
 
   override def receive: Receive = {
     case InitReader => {
-      // find sender actor
-      val senzSender = context.actorSelection("../SenzSender")
-
       // listen for user inputs form commandline
       while (true) {
         // read user input from the command line
@@ -27,7 +25,9 @@ class SenzReader extends Actor {
           val signature = RSAUtils.signSenz(inputSenz.trim)
           val signedSenz = s"$inputSenz $signature"
 
-          senzSender ! Send(signedSenz)
+          // start actor to handle the senz
+          val handler = context.actorOf(Props(new AgentRegistrationHandler))
+          handler ! Message(signedSenz)
         }
       }
     }

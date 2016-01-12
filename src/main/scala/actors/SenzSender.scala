@@ -2,11 +2,9 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
-import akka.actor.{Actor, ReceiveTimeout}
+import akka.actor.Actor
 import config.Configuration
 import utils.SenzUtils
-
-import scala.concurrent.duration._
 
 case class InitSender()
 
@@ -29,16 +27,11 @@ class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
       // return success response
       sender ! InitSuccess
     case Send(msg) =>
-      context.setReceiveTimeout(5 seconds)
       println("send message " + msg)
 
       // TODO validate sign, encrypt the senz
 
       sendSenz(msg)
-    case ReceiveTimeout =>
-      //resend message
-      //sendSenz()
-      println("timeout")
   }
 
   def sendSenz(msg: String) = {

@@ -2,6 +2,7 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket}
 
+import actors.handlers.SenzHandler
 import akka.actor.{Actor, Props}
 import utils.SenzParser
 
