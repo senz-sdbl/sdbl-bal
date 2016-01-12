@@ -18,6 +18,7 @@ class PingSender extends Actor {
   override def receive: Receive = {
     case Ping =>
       // send ping via senz sender
+      println("-------pingggg sender-----")
       val ping = SenzUtils.getPingSenz()
       senzSender ! Send(ping)
 

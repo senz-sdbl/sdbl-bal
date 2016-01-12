@@ -27,7 +27,7 @@ class SenzReader extends Actor {
 
           // start actor to handle the senz
           val handler = context.actorOf(Props(new AgentRegistrationHandler))
-          handler ! Message(signedSenz)
+          handler ! Message(signedSenz, 0)
         }
       }
     }

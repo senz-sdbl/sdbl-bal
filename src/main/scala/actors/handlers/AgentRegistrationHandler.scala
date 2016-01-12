@@ -1,11 +1,11 @@
 package actors.handlers
 
 import actors.Send
-import akka.actor.{Actor, ReceiveTimeout}
+import akka.actor.Actor
 
 import scala.concurrent.duration._
 
-case class Message(senz: String)
+case class Message(senz: String, counter: Int)
 
 case class Done()
 
@@ -17,18 +17,18 @@ class AgentRegistrationHandler extends Actor {
   import context._
 
   val senzSender = context.actorSelection("../../SenzSender")
-  context.setReceiveTimeout(30 seconds)
 
   override def receive: Receive = {
-    case Message(senz) =>
-      senzSender ! Send(senz)
-
-      context.system.scheduler.scheduleOnce(8 seconds, self, Message(senz))
+    case Message(senz, counter) =>
+      if (counter < 3) {
+        senzSender ! Send(senz)
+        context.system.scheduler.scheduleOnce(8 seconds, self, Message(senz, counter + 1))
+      } else {
+        // stop actor
+        context.stop(self)
+      }
     case Done =>
       // success
-      context.stop(self)
-    case ReceiveTimeout =>
-      // fail
       context.stop(self)
   }
 }
