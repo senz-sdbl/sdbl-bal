@@ -1,12 +1,11 @@
 package crypto
 
-import java.io.{PrintWriter, File, FileInputStream, FileOutputStream}
+import java.io.{File, FileInputStream, FileOutputStream}
 import java.security._
 import java.security.spec.{PKCS8EncodedKeySpec, X509EncodedKeySpec}
 
 import config.Configuration
 import sun.misc.{BASE64Decoder, BASE64Encoder}
-import scala.io.Source
 
 /**
  * Created by eranga on 1/11/16.
@@ -19,57 +18,6 @@ object RSAUtils extends Configuration {
       dir.mkdir
       generateRSAKeyPair()
     }
-  }
-
-  def enerateRSAKeyPair() = {
-    // generate key pair
-    val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
-    keyPairGenerator.initialize(1024, new SecureRandom)
-    val keyPair: KeyPair = keyPairGenerator.generateKeyPair
-
-    // public key string
-    val publicKey = new BASE64Encoder().encode(keyPair.getPublic.getEncoded).replaceAll("\n", "").replaceAll("\r", "")
-    val publicKeyWriter = new PrintWriter(new File(publicKeyLocation))
-    publicKeyWriter.write(publicKey)
-    publicKeyWriter.close()
-
-    // private key string
-    val privateKey = new BASE64Encoder().encode(keyPair.getPrivate.getEncoded).replaceAll("\n", "").replaceAll("\r", "")
-    val privateKeyWriter = new PrintWriter(new File(privateKeyLocation))
-    privateKeyWriter.write(privateKey)
-    privateKeyWriter.close()
-
-    //    // save public key
-    //    val x509keySpec = new X509EncodedKeySpec(keyPair.getPublic.getEncoded)
-    //    val publicKeyStream = new FileOutputStream(publicKeyLocation)
-    //    publicKeyStream.write(x509keySpec.getEncoded)
-    //
-    //    // save private key
-    //    val pkcs8KeySpec = new PKCS8EncodedKeySpec(keyPair.getPrivate.getEncoded)
-    //    val privateKeyStream = new FileOutputStream(privateKeyLocation)
-    //    privateKeyStream.write(pkcs8KeySpec.getEncoded)
-  }
-
-  def getPublicKey(): PublicKey = {
-    val publicKey = Source.fromFile(publicKeyLocation).mkString;
-    val stream = new BASE64Decoder().decodeBuffer(publicKey)
-
-    val spec = new X509EncodedKeySpec(stream)
-    val keyFactory = KeyFactory.getInstance("RSA")
-
-    // generate public key
-    keyFactory.generatePublic(spec)
-  }
-
-  def gerPrivateKey() = {
-    val privateKey = Source.fromFile(privateKeyLocation).mkString;
-    val stream = new BASE64Decoder().decodeBuffer(privateKey)
-
-    val spec = new PKCS8EncodedKeySpec(stream)
-    val keyFactory = KeyFactory.getInstance("RSA")
-
-    // generate public key
-    keyFactory.generatePrivate(spec)
   }
 
   def generateRSAKeyPair() = {

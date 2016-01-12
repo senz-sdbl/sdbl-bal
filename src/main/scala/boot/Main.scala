@@ -20,14 +20,15 @@ object Main extends App {
 
   implicit val system = ActorSystem("senz")
 
-  val socket = new DatagramSocket()
+  // this is the datagram socket that uses to connect to senz switch
+  val datagramSocket = new DatagramSocket()
 
-  // first generate key pair
+  // first generate key pair if not already generated
   RSAUtils.initRSAKeys()
 
   // initialize actors
-  val senzSender = system.actorOf(Props(classOf[SenzSender], socket), name = "SenzSender")
-  val senzListener = system.actorOf(Props(classOf[SenzListener], socket), name = "SenzListener")
+  val senzSender = system.actorOf(Props(classOf[SenzSender], datagramSocket), name = "SenzSender")
+  val senzListener = system.actorOf(Props(classOf[SenzListener], datagramSocket), name = "SenzListener")
   val senzReader = system.actorOf(Props[SenzReader], name = "SenzReader")
   val pingSender = system.actorOf(Props[PingSender], name = "PingSender")
 
