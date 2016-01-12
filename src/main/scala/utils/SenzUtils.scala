@@ -19,4 +19,16 @@ object SenzUtils extends Configuration {
     val senzSignature = RSAUtils.signSenz(unSignedSenzPayload)
     s"$unSignedSenzPayload $senzSignature"
   }
+
+  def getPingSenz() = {
+    // unsigned senz
+    val timestamp = (System.currentTimeMillis / 1000).toString
+    val receiver = switchName
+    val sender = clientName
+    val unSignedSenzPayload = s"PING #time $timestamp @$receiver ^$sender"
+
+    // sign senz
+    val senzSignature = RSAUtils.signSenz(unSignedSenzPayload)
+    s"$unSignedSenzPayload $senzSignature"
+  }
 }

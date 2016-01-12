@@ -25,14 +25,16 @@ object Main extends App {
   val senzSender = system.actorOf(Props(classOf[SenzSender], socket), name = "SenzSender")
   val senzListener = system.actorOf(Props(classOf[SenzListener], socket), name = "SenzListener")
   val senzReader = system.actorOf(Props[SenzReader], name = "SenzReader")
+  val pingSender = system.actorOf(Props[PingSender], name = "PingSender")
 
   // init sender and wait until its success   
   implicit val timeout = Timeout(5 seconds)
   val future = senzSender ? InitSender
   future onComplete {
     case Success(result) =>
-      // start listener and reader
+      // start listener, ping sender and reader
       senzListener ! InitListener
+      pingSender ! Ping
       senzReader ! InitReader
     case Failure(result) =>
       println("init fails")
