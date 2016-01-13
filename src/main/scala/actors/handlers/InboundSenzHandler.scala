@@ -13,17 +13,18 @@ class SenzHandler extends Actor {
   val senzSender = context.actorSelection("../../SenzSender")
 
   override def receive: Receive = {
-    case SenzMessage(senz) =>
-      senz match {
-        case Senz(SenzType.GET, _, _, _, _) =>
-          // handle message
-          println("handle message GET")
-        case Senz(SenzType.DATA, _, _, _, _) =>
-          println("handle message DATA")
-        //senzSender ! Send("yahooo")
-        case Senz(SenzType.PING, _, _, _, _) =>
+    case Senz(SenzType.GET, sender, receiver, attr, signature) =>
+      Senz(SenzType.GET, sender, receiver, attr, signature)
+    case Senz(SenzType.DATA, sender, receiver, attr, signature) =>
+      Senz(SenzType.DATA, sender, receiver, attr, signature)
+
+      attr.get("#msg") match {
+        case "ShareDone" =>
+        case "ShareFail" =>
+        case "UserCreated" =>
+        case "UserCreationFailed" =>
       }
-    case _ =>
-    // unsupported message
+    case Senz(SenzType.PING, sender, receiver, attr, signature) =>
+      Senz(SenzType.DATA, sender, receiver, attr, signature)
   }
 }

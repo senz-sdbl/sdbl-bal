@@ -39,7 +39,7 @@ object Main extends App {
     case Success(result) =>
       // start listener, ping sender and reader
       senzListener ! InitListener
-      //pingSender ! Ping
+      pingSender ! Ping
       senzReader ! InitReader
     case Failure(result) =>
       println("init fails")
