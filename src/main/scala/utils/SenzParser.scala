@@ -2,7 +2,7 @@ package utils
 
 object SenzType extends Enumeration {
   type SenzType = Value
-  val SHARE, GET, DATA, PING = Value
+  val SHARE, GET, PUT, DATA, PING = Value
 }
 
 import SenzType._

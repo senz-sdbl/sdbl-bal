@@ -35,7 +35,7 @@ class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
   }
 
   def sendSenz(msg: String) = {
-    val senzOut = new DatagramPacket(msg.getBytes, msg.getBytes.length, InetAddress.getByName(serviceHost), servicePort)
+    val senzOut = new DatagramPacket(msg.getBytes, msg.getBytes.length, InetAddress.getByName(switchHost), switchPort)
     socket.send(senzOut)
   }
 }

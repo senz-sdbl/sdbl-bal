@@ -14,17 +14,43 @@ class SenzHandler extends Actor {
 
   override def receive: Receive = {
     case Senz(SenzType.GET, sender, receiver, attr, signature) =>
-      Senz(SenzType.GET, sender, receiver, attr, signature)
+      val senz = Senz(SenzType.GET, sender, receiver, attr, signature)
+      handlerGet(senz)
+    case Senz(SenzType.PUT, sender, receiver, attr, signature) =>
+      val senz = Senz(SenzType.PUT, sender, receiver, attr, signature)
+      handlerPut(senz)
+    case Senz(SenzType.SHARE, sender, receiver, attr, signature) =>
+      val senz = Senz(SenzType.SHARE, sender, receiver, attr, signature)
+      handlerShare(senz)
     case Senz(SenzType.DATA, sender, receiver, attr, signature) =>
-      Senz(SenzType.DATA, sender, receiver, attr, signature)
+      val senz = Senz(SenzType.DATA, sender, receiver, attr, signature)
+      handleData(senz)
+    case Senz(SenzType.PING, _, _, _, _) =>
+    // we ignore ping messages
+  }
 
-      attr.get("#msg") match {
-        case "ShareDone" =>
-        case "ShareFail" =>
-        case "UserCreated" =>
-        case "UserCreationFailed" =>
-      }
-    case Senz(SenzType.PING, sender, receiver, attr, signature) =>
-      Senz(SenzType.DATA, sender, receiver, attr, signature)
+  def handlerGet(senz: Senz) = {
+    // save in database
+
+    // send balance query to epic
+  }
+
+  def handlerPut(senz: Senz) = {
+    // save in database
+
+    // send transaction request to epic
+  }
+
+  def handleData(senz: Senz) = {
+    senz.attributes.get("#msg") match {
+      case "ShareDone" =>
+      case "ShareFail" =>
+      case "UserCreated" =>
+      case "UserCreationFailed" =>
+    }
+  }
+
+  def handlerShare(senz: Senz) = {
+    // nothing to do with share
   }
 }

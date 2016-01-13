@@ -18,8 +18,8 @@ trait Configuration {
   lazy val clientName = Try(config.getString("senz.client-name")).getOrElse("")
 
   // server config
-  lazy val serviceHost = Try(config.getString("service.host")).getOrElse("localhost")
-  lazy val servicePort = Try(config.getInt("service.port")).getOrElse(9999)
+  lazy val switchHost = Try(config.getString("switch.host")).getOrElse("localhost")
+  lazy val switchPort = Try(config.getInt("switch.port")).getOrElse(9999)
 
   // db config
   lazy val dbHost = Try(config.getString("db.host")).getOrElse("dev.localhost")
