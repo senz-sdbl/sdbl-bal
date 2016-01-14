@@ -11,16 +11,23 @@ case class RegDone()
 
 case class RegFail()
 
+case class ShareDone()
+
+case class ShareFail()
+
 /**
  * Created by eranga on 1/12/16.
  */
 class AgentRegistrationHandler extends Actor {
 
-  override def preStart = {println("my path is----------: " + context.self.path)}
-
   import context._
 
-  val senzSender = context.actorSelection("../../SenzSender")
+  override def preStart = {
+    println("----path----- " + context.self.path)
+  }
+
+  //val senzSender = context.actorSelection("../../SenzSender")
+  val senzSender = context.actorSelection("/user/SenzSender")
 
   override def receive: Receive = {
     case Message(senz, counter) =>
@@ -36,6 +43,6 @@ class AgentRegistrationHandler extends Actor {
       context.stop(self)
     case RegFail =>
       // fail
-      println("hooooooo")
+      println("Registration fail")
   }
 }

@@ -18,7 +18,10 @@ case class InitFail()
  * Created by eranga on 1/10/16.
  */
 class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
-  override def preStart = {println("my path is----------: " + context.self.path)}
+
+  override def preStart = {
+    println("----path----- " + context.self.path)
+  }
 
   override def receive: Receive = {
     case InitSender =>

@@ -13,8 +13,6 @@ case class InitListener()
  */
 class SenzListener(socket: DatagramSocket) extends Actor {
 
-  override def preStart = {println("my path is-------: " + context.self.path)}
-
   override def receive: Receive = {
     case InitListener => {
       val bufSize = 1024
@@ -27,7 +25,6 @@ class SenzListener(socket: DatagramSocket) extends Actor {
       while (true) {
         socket.receive(senzIn)
         val msg = new String(senzIn.getData)
-        println("received--: " + msg)
 
         // handle received senz
         // parse senz first

@@ -46,17 +46,13 @@ object SenzHandler {
 
     senz.attributes.get("#msg") match {
       case Some("ShareDone") =>
-        println("Share done")
       case Some("ShareFail") =>
-        println("Share fail")
       case Some("UserCreated") =>
-        println("createddd")
       case Some("UserCreationFailed") =>
-        //reg ! RegFail
-        println("failedddd--")
       case Some("SignatureVerificationFailed") =>
-        println("huthiiiii--")
         reg ! RegFail
+      case other =>
+        println(s"not supported message $other")
     }
   }
 

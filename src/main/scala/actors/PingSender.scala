@@ -13,12 +13,16 @@ class PingSender extends Actor {
 
   import context._
 
-  val senzSender = context.actorSelection("../SenzSender")
+  override def preStart = {
+    println("----path----- " + context.self.path)
+  }
+
+  //val senzSender = context.actorSelection("../SenzSender")
+  val senzSender = context.actorSelection("/user/SenzSender")
 
   override def receive: Receive = {
     case Ping =>
       // send ping via senz sender
-      println("-------pingggg sender-----")
       val ping = SenzUtils.getPingSenz()
       senzSender ! Send(ping)
 
