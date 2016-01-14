@@ -1,16 +1,13 @@
-package actors.handlers
+package handlers
 
-import akka.actor.Actor
-import utils.{Senz, SenzType}
-
-case class SenzMessage(senz: Senz)
+import utils.{SenzType, Senz}
 
 /**
- * Created by eranga on 1/10/16
+ * Created by eranga on 1/14/16.
  */
-class InboundSenzHandler extends Actor {
+object SenzHandler {
 
-  override def receive: Receive = {
+  def handle(senz: Senz) = {
     case Senz(SenzType.GET, sender, receiver, attr, signature) =>
       val senz = Senz(SenzType.GET, sender, receiver, attr, signature)
       handleGet(senz)
@@ -51,4 +48,5 @@ class InboundSenzHandler extends Actor {
   def handlerShare(senz: Senz) = {
     // nothing to do with share
   }
+
 }

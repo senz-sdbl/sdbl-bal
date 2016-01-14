@@ -2,14 +2,13 @@ package actors.handlers
 
 import akka.actor.Actor
 
-case class BalanceQuery()
+case class Transaction()
 
 /**
  * Created by eranga on 1/13/16.
  */
-class EpicBalanceQueryHandler extends Actor {
+class EpicTransactionHandler extends Actor{
   override def receive: Receive = {
-    case BalanceQuery =>
-
+    case Transaction =>
   }
 }

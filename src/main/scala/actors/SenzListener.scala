@@ -2,8 +2,8 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket}
 
-import actors.handlers.SenzHandler
-import akka.actor.{Actor, Props}
+import _root_.handlers.SenzHandler
+import akka.actor.Actor
 import utils.SenzParser
 
 case class InitListener()
@@ -26,11 +26,10 @@ class SenzListener(socket: DatagramSocket) extends Actor {
         val msg = new String(senzIn.getData)
         println("received--: " + msg)
 
-        // handle received senz via a actor
+        // handle received senz
         // parse senz first
-        val senzHandler = context.actorOf(Props(new SenzHandler))
         val senz = SenzParser.getSenz(msg)
-        senzHandler ! senz
+        SenzHandler.handle(senz)
       }
     }
   }
