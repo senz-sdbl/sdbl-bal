@@ -11,6 +11,8 @@ case class InitReader()
  */
 class SenzReader extends Actor {
 
+  override def preStart = {println("my path is---------: " + context.self.path)}
+
   override def receive: Receive = {
     case InitReader => {
       // listen for user inputs form commandline
@@ -26,7 +28,7 @@ class SenzReader extends Actor {
           val signedSenz = s"$inputSenz $signature"
 
           // start actor to handle the senz
-          val handler = context.actorOf(Props(new AgentRegistrationHandler))
+          val handler = context.actorOf(Props[AgentRegistrationHandler], "AgentRegistrationHandler")
           handler ! Message(signedSenz, 0)
         }
       }

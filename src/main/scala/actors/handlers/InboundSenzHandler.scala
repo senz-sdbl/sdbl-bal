@@ -41,10 +41,11 @@ class InboundSenzHandler extends Actor {
 
   def handleData(senz: Senz) = {
     senz.attributes.get("#msg") match {
-      case "ShareDone" =>
-      case "ShareFail" =>
-      case "UserCreated" =>
-      case "UserCreationFailed" =>
+      //      case "ShareDone" =>
+      //      case "ShareFail" =>
+      //      case "UserCreated" =>
+      //      case "UserCreationFailed" =>
+      case _ =>
     }
   }
 

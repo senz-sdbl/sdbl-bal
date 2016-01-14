@@ -7,12 +7,16 @@ import scala.concurrent.duration._
 
 case class Message(senz: String, counter: Int)
 
-case class Done()
+case class RegDone()
+
+case class RegFail()
 
 /**
  * Created by eranga on 1/12/16.
  */
 class AgentRegistrationHandler extends Actor {
+
+  override def preStart = {println("my path is----------: " + context.self.path)}
 
   import context._
 
@@ -27,8 +31,11 @@ class AgentRegistrationHandler extends Actor {
         // stop actor
         context.stop(self)
       }
-    case Done =>
+    case RegDone =>
       // success
       context.stop(self)
+    case RegFail =>
+      // fail
+      println("hooooooo")
   }
 }

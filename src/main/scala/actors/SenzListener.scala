@@ -12,6 +12,9 @@ case class InitListener()
  * Created by eranga on 1/9/16.
  */
 class SenzListener(socket: DatagramSocket) extends Actor {
+
+  override def preStart = {println("my path is-------: " + context.self.path)}
+
   override def receive: Receive = {
     case InitListener => {
       val bufSize = 1024
