@@ -14,10 +14,9 @@ class PingSender extends Actor {
   import context._
 
   override def preStart = {
-    println("----path----- " + context.self.path)
+    println("----started----- " + context.self.path)
   }
 
-  //val senzSender = context.actorSelection("../SenzSender")
   val senzSender = context.actorSelection("/user/SenzSender")
 
   override def receive: Receive = {
@@ -27,6 +26,6 @@ class PingSender extends Actor {
       senzSender ! Send(ping)
 
       // re schedule to run on one minute
-      context.system.scheduler.scheduleOnce(1 minutes, self, Ping)
+      context.system.scheduler.scheduleOnce(20 minutes, self, Ping)
   }
 }

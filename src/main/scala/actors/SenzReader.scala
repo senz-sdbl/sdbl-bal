@@ -12,7 +12,7 @@ case class InitReader()
 class SenzReader extends Actor {
 
   override def preStart = {
-    println("----path----- " + context.self.path)
+    println("----started----- " + context.self.path)
   }
 
   override def receive: Receive = {

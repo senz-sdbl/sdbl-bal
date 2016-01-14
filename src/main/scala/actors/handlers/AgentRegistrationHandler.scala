@@ -23,10 +23,9 @@ class AgentRegistrationHandler extends Actor {
   import context._
 
   override def preStart = {
-    println("----path----- " + context.self.path)
+    println("----started----- " + context.self.path)
   }
 
-  //val senzSender = context.actorSelection("../../SenzSender")
   val senzSender = context.actorSelection("/user/SenzSender")
 
   override def receive: Receive = {
