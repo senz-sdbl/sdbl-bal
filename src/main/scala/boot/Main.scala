@@ -6,8 +6,11 @@ import actors._
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.datastax.driver.core.Cluster
 import crypto.RSAUtils
+import db.Db
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -44,4 +47,19 @@ object Main extends App {
     case Failure(result) =>
       println("init fails")
   }
+
+
+  val cluster = Cluster.builder().addContactPoint("127.0.0.1").build()
+  val session = cluster.connect("dev")
+
+  val db = new Db(session)
+
+  db.insertUser(db.User(9, "John"))
+
+  //val users = Await.result(db.selectAllUsers, 10 seconds)
+
+  //println(users.toList)
+
+  session.close()
+  cluster.close()
 }

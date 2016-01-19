@@ -16,7 +16,9 @@ libraryDependencies ++= {
     "org.reactivemongo" %% "reactivemongo"              % reactiveMongoVersion,
     "com.websudos"      %%  "phantom-dsl"               % phantomVersion,
     "com.websudos"      %%  "phantom-testkit"           % phantomVersion,
-    "com.websudos"      %%  "phantom-connectors"        % phantomVersion
+    "com.websudos"      %%  "phantom-connectors"        % phantomVersion,
+    "eu.inn"            %%  "binders-cassandra"         % "0.2.5",
+    "com.datastax.cassandra"  % "cassandra-driver-core" % "2.1.9" exclude("org.xerial.snappy", "snappy-java")
   )
 }
 
