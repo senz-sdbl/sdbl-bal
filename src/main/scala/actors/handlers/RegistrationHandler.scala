@@ -1,26 +1,17 @@
 package actors.handlers
 
-import actors.Send
+import actors.RegisterSenz
 import akka.actor.Actor
+import utils.SenzUtils
 
 import scala.concurrent.duration._
 
-case class Message(senz: String, counter: Int)
-
-case class RegistrationDone()
-
-case class RegistrationFail()
-
-case class AlreadyRegistered()
-
-case class ShareDone()
-
-case class ShareFail()
+case class RegistrationMessage(senz: String, counter: Int)
 
 /**
- * Created by eranga on 1/12/16.
+ * Created by eranga on 1/22/16.
  */
-class AgentRegistrationHandler extends Actor {
+class RegistrationHandler extends Actor {
 
   import context._
 
@@ -30,10 +21,13 @@ class AgentRegistrationHandler extends Actor {
 
   val senzSender = context.actorSelection("/user/SenzSender")
 
+  // send registration senz
+  val registrationSenz = SenzUtils.getRegistrationSenz()
+
   override def receive: Receive = {
     case Message(senz, counter) =>
       if (counter < 3) {
-        senzSender ! Send(senz)
+        senzSender ! RegisterSenz(senz)
         context.system.scheduler.scheduleOnce(8 seconds, self, Message(senz, counter + 1))
       } else {
         // stop actor
@@ -49,4 +43,5 @@ class AgentRegistrationHandler extends Actor {
       // fail
       println("Registration fail")
   }
+
 }

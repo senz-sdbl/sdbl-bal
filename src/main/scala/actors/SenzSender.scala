@@ -4,9 +4,10 @@ import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
 import akka.actor.Actor
 import config.Configuration
-import utils.SenzUtils
 
 case class InitSender()
+
+case class RegisterSenz(senz: String)
 
 case class Send(msg: String)
 
@@ -24,10 +25,8 @@ class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
   }
 
   override def receive: Receive = {
-    case InitSender =>
-      // send registration senz
-      val registrationSenz = SenzUtils.getRegistrationSenz()
-      sendSenz(registrationSenz)
+    case RegisterSenz(senz) =>
+      sendSenz(senz)
 
       // return success response
       sender ! InitSuccess

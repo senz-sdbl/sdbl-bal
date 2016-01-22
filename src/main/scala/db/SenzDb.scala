@@ -37,7 +37,7 @@ class SenzDb(cluster: Cluster) {
     val resultSet = session.execute(selectStmt)
     val row = resultSet.one()
 
-    Agent(row.getString("username"), row.getString("brancg"))
+    Agent(row.getString("username"), row.getString("branch"))
   }
 
   def addBalanceQuery(balance: Balance) = {

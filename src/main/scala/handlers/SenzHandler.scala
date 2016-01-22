@@ -1,6 +1,6 @@
 package handlers
 
-import actors.handlers.RegFail
+import actors.handlers.{AlreadyRegistered, RegistrationDone, RegistrationFail}
 import akka.actor.ActorContext
 import utils.{Senz, SenzType}
 
@@ -47,9 +47,12 @@ object SenzHandler {
       case Some("ShareDone") =>
       case Some("ShareFail") =>
       case Some("UserCreated") =>
-      case Some("UserCreationFailed") =>
-      case Some("SignatureVerificationFailed") =>
-        reg ! RegFail
+      case Some("REGISTRATION_DONE") =>
+        reg ! RegistrationDone
+      case Some("REGISTRATION_FAIL") =>
+        reg ! RegistrationFail
+      case Some("ALREADY_REGISTERED") =>
+        reg ! AlreadyRegistered
       case other =>
         println(s"not supported message $other")
     }
