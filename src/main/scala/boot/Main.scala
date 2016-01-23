@@ -1,18 +1,14 @@
 package boot
 
-import java.net.{InetSocketAddress, InetAddress, DatagramSocket}
+import java.net.DatagramSocket
 
-import actors._
+import actors.handlers.{RegSenz, RegistrationHandler}
+import scala.concurrent.duration._
 import akka.actor.{ActorSystem, Props}
-import akka.io.UdpConnected
-import akka.pattern.ask
 import akka.util.Timeout
 import crypto.RSAUtils
-import db.{Agent, SenzCassandraCluster, SenzDb}
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import db.SenzCassandraCluster
+import utils.SenzUtils
 
 /**
  * Created by eranga on 1/9/16.
@@ -24,10 +20,17 @@ object Main extends App with SenzCassandraCluster {
   implicit val system = ActorSystem("senz")
 
   // this is the datagram socket that uses to connect to senz switch
-  val datagramSocket = new DatagramSocket()
+  val socket = new DatagramSocket()
 
   // first generate key pair if not already generated
   RSAUtils.initRSAKeys()
+
+  // send registration senz
+  val registrationSenz = SenzUtils.getRegistrationSenz()
+
+  val regHandler = system.actorOf(Props(classOf[RegistrationHandler], socket), name = "RegistrationHandler")
+  implicit val timeout = Timeout(5 seconds)
+  regHandler ! RegSenz(registrationSenz, 0)
 
   // initialize actors
   //  val senzSender = system.actorOf(Props(classOf[SenzSender], datagramSocket), name = "SenzSender")
@@ -48,14 +51,13 @@ object Main extends App with SenzCassandraCluster {
   //      println("init fails")
   //  }
 
-  implicit val askTimeout = Timeout(5 seconds)
-  val addr = new InetSocketAddress(InetAddress.getByName(switchHost), switchPort)
-  val senzUdp = system.actorOf(Props(classOf[SenzUdp], addr), name = "SenzSender")
-  val future = senzUdp ? InitMsg
-  val result = Await.result(future, 7 seconds).asInstanceOf[AnyRef]
-  result match {
-    case InitDone =>
-      println("connected to socket")
-      senzUdp ! SenzMessage("yahoo")
-  }
+  // start actor to listen + send udp
+  //  val address = new InetSocketAddress(InetAddress.getByName(switchHost), switchPort)
+  //  val senzUdp = system.actorOf(Props(classOf[SenzUdp], address), name = "SenzUdp")
+  //
+  //  // actor to send periodic ping messages
+  //  val pingSender = system.actorOf(Props[PingSender], name = "PingSender")
+  //
+  //  // actor to listen senz messages via terminal
+  //  val senzReader = system.actorOf(Props[SenzReader], name = "SenzReader")
 }

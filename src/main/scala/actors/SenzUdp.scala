@@ -6,9 +6,6 @@ import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, UdpConnected}
 import akka.util.ByteString
 
-case class InitMsg()
-case class InitDone()
-
 case class SenzMessage(msg: String)
 
 /**
@@ -18,27 +15,39 @@ class SenzUdp(remote: InetSocketAddress) extends Actor {
 
   import context.system
 
-  def receive = {
-    case InitMsg =>
-      println("INIT" + sender.path)
-      IO(UdpConnected) ! UdpConnected.Connect(self, remote)
-    case UdpConnected.Connected =>
-      println("connected " + context.parent.path)
-      context.parent ! InitDone
-      //sender ! UdpConnected.Connected
-      //context.become(ready(sender()))
-      //self ! SenzMessage("Yahoo")
-    case UdpConnected.Received(data) =>
-      println(data.toString())
-    // process data, send it on, etc
-    case SenzMessage(msg) =>
-      println("senz msg")
+  override def preStart = {
+    println("----started----- " + context.self.path)
+  }
 
-      sender ! UdpConnected.Send(ByteString(msg))
+  // connect to senz switch via udp
+  IO(UdpConnected) ! UdpConnected.Connect(self, remote)
+
+  def receive = {
+    case UdpConnected.Connected =>
+      context.become(ready(sender()))
+
+      // TODO handle registration via actor
+
+      // init ping sender
+      val pingSender = context.actorSelection("/user/PingSender")
+      pingSender ! InitPing
+
+      // init SenzReader
+      val senzReader = context.actorSelection("/user/SenzReader")
+      senzReader ! InitReader
+  }
+
+  def ready(connection: ActorRef): Receive = {
+    case UdpConnected.Received(data) =>
+      println(data)
+    case SenzMessage(msg) =>
+      connection ! UdpConnected.Send(ByteString(msg))
     case UdpConnected.Disconnect =>
-      println("disconnect")
-      sender ! UdpConnected.Disconnect
+      connection ! UdpConnected.Disconnect
     case UdpConnected.Disconnected =>
-      println("disconnectedddd")
+      // reconnect after disconnecting
+      IO(UdpConnected) ! UdpConnected.Connect(self, remote)
+    //context.stop(self)
+    // TODO reconnect
   }
 }

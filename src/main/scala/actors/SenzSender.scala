@@ -2,7 +2,8 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
-import akka.actor.Actor
+import actors.handlers.{RegSenz, RegistrationHandler}
+import akka.actor.{Props, Actor}
 import config.Configuration
 import utils.SenzUtils
 
@@ -25,8 +26,13 @@ class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
 
   override def receive: Receive = {
     case InitSender =>
-      // send registration senz
       val registrationSenz = SenzUtils.getRegistrationSenz()
+
+      // start actor to send registration senz
+      val regActor = context.actorOf(Props(new RegistrationHandler(socket)), "RegistrationHandler")
+      //regActor ! RegSenz()
+
+      // send registration senz
       sendSenz(registrationSenz)
 
       // return success response

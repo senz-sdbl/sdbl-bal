@@ -30,8 +30,8 @@ class SenzReader extends Actor {
           val signedSenz = s"$inputSenz $signature"
 
           // start actor to handle the senz
-          val handler = context.actorOf(Props(new AgentRegistrationHandler), "AgentRegistrationHandler")
-          handler ! Message(signedSenz, 0)
+          //val handler = context.actorOf(Props(new AgentRegistrationHandler), "AgentRegistrationHandler")
+          //handler ! Message(signedSenz, 0)
         }
       }
     }
