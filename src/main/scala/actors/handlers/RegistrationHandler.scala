@@ -1,6 +1,7 @@
 package actors.handlers
 
-import actors.RegisterSenz
+import java.net.DatagramSocket
+
 import akka.actor.Actor
 import utils.SenzUtils
 
@@ -11,7 +12,7 @@ case class RegistrationMessage(senz: String, counter: Int)
 /**
  * Created by eranga on 1/22/16.
  */
-class RegistrationHandler extends Actor {
+class RegistrationHandler(socket: DatagramSocket) extends Actor {
 
   import context._
 
@@ -19,15 +20,13 @@ class RegistrationHandler extends Actor {
     println("----started----- " + context.self.path)
   }
 
-  val senzSender = context.actorSelection("/user/SenzSender")
-
   // send registration senz
   val registrationSenz = SenzUtils.getRegistrationSenz()
 
   override def receive: Receive = {
     case Message(senz, counter) =>
       if (counter < 3) {
-        senzSender ! RegisterSenz(senz)
+        //senzSender ! RegisterSenz(senz)
         context.system.scheduler.scheduleOnce(8 seconds, self, Message(senz, counter + 1))
       } else {
         // stop actor
