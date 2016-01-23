@@ -2,13 +2,18 @@ package boot
 
 import java.net.DatagramSocket
 
-import actors.handlers.{RegSenz, RegistrationHandler}
-import scala.concurrent.duration._
+import actors.handlers.{RegDone, RegFail, RegSenz, RegistrationHandler}
 import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
 import akka.util.Timeout
 import crypto.RSAUtils
 import db.SenzCassandraCluster
 import utils.SenzUtils
+
+import scala.concurrent.TimeoutException
+import scala.concurrent.duration._
+import scala.util.{Failure, Success}
+
 
 /**
  * Created by eranga on 1/9/16.
@@ -29,8 +34,19 @@ object Main extends App with SenzCassandraCluster {
   val registrationSenz = SenzUtils.getRegistrationSenz()
 
   val regHandler = system.actorOf(Props(classOf[RegistrationHandler], socket), name = "RegistrationHandler")
-  implicit val timeout = Timeout(5 seconds)
-  regHandler ! RegSenz(registrationSenz, 0)
+  implicit val timeout = Timeout(10 seconds)
+
+  regHandler ? RegSenz(registrationSenz, 0) onComplete {
+    case Success(RegDone) =>
+      println("reg done main")
+    case Success(RegFail) =>
+      println("reg done fail")
+    case Failure(error: TimeoutException) =>
+      println(error.toString + "main thread timeout")
+    case Failure(other) =>
+      println(other.toString + "other failure")
+  }
+
 
   // initialize actors
   //  val senzSender = system.actorOf(Props(classOf[SenzSender], datagramSocket), name = "SenzSender")
