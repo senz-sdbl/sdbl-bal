@@ -30,8 +30,6 @@ class SenzListener(socket: DatagramSocket) extends Actor {
         socket.receive(senzIn)
         val msg = new String(senzIn.getData)
 
-        //println("receiveddd...  " + msg)
-
         // handle received senz
         // parse senz first
         val senz = SenzParser.getSenz(msg)

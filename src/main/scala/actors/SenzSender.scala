@@ -2,10 +2,9 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
-import actors.handlers.{RegSenz, RegistrationHandler}
-import akka.actor.{Props, Actor}
+import actors.handlers.RegistrationHandler
+import akka.actor.{Actor, Props}
 import config.Configuration
-import utils.SenzUtils
 
 case class InitSender()
 
