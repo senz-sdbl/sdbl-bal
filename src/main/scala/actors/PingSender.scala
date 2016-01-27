@@ -19,7 +19,7 @@ class PingSender extends Actor {
     println("----started----- " + context.self.path)
   }
 
-  val senzUdp = context.actorSelection("/user/SenzUdp")
+  val senzSender = context.actorSelection("/user/SenzSender")
 
   override def receive: Receive = {
     case InitPing =>
@@ -29,7 +29,7 @@ class PingSender extends Actor {
     case Ping =>
       // send ping via senz udp
       val ping = SenzUtils.getPingSenz()
-      senzUdp ! SenzMessage(ping)
+      senzSender ! SendSenz(ping)
 
       // re schedule to run on one minute
       context.system.scheduler.scheduleOnce(10 seconds, self, Ping)

@@ -2,6 +2,7 @@ package boot
 
 import java.net.DatagramSocket
 
+import actors._
 import actors.handlers.{RegDone, RegFail, RegSenz, RegistrationHandler}
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
@@ -31,21 +32,31 @@ object Main extends App with SenzCassandraCluster {
   RSAUtils.initRSAKeys()
 
   // send registration senz
-  val registrationSenz = SenzUtils.getRegistrationSenz()
+  //val regHandler = system.actorOf(Props(classOf[RegistrationHandler], socket), name = "RegistrationHandler")
 
-  val regHandler = system.actorOf(Props(classOf[RegistrationHandler], socket), name = "RegistrationHandler")
-  implicit val timeout = Timeout(10 seconds)
+  // start listener and sender
+  val senzSender = system.actorOf(Props(classOf[SenzSender], socket), name = "SenzSender")
+  senzSender ! InitSender
 
-  regHandler ? RegSenz(registrationSenz, 0) onComplete {
-    case Success(RegDone) =>
-      println("reg done main")
-    case Success(RegFail) =>
-      println("reg done fail")
-    case Failure(error: TimeoutException) =>
-      println(error.toString + "main thread timeout")
-    case Failure(other) =>
-      println(other.toString + "other failure")
-  }
+  val senzListener = system.actorOf(Props(classOf[SenzListener], socket), name = "SenzListener")
+  senzListener ! InitListener
+
+  val senzReader = system.actorOf(Props[SenzReader], name = "SenzReader")
+  val pingSender = system.actorOf(Props[PingSender], name = "PingSender")
+  //pingSender ! Ping
+
+  //implicit val timeout = Timeout(10 seconds)
+
+  //  regHandler ? RegSenz(registrationSenz, 0) onComplete {
+  //    case Success(RegDone) =>
+  //      println("reg done main")
+  //    case Success(RegFail) =>
+  //      println("reg done fail")
+  //    case Failure(error: TimeoutException) =>
+  //      println(error.toString + "main thread timeout")
+  //    case Failure(other) =>
+  //      println(other.toString + "other failure")
+  //  }
 
 
   // initialize actors

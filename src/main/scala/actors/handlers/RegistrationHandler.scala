@@ -1,16 +1,22 @@
 package actors.handlers
 
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
+import java.util.concurrent.ScheduledFuture
 
-import akka.actor.{Cancellable, Actor}
+import actors.{InitReader, Ping, Sender, SendSenz}
+import akka.actor.{Cancellable, Scheduler, Actor}
 import config.Configuration
-import utils.{Senz, SenzParser}
-
+import crypto.RSAUtils
+import utils.{SenzUtils, Senz, SenzParser}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 
+case class InitReg()
+
 case class RegSenz(senz: String, counter: Int)
+
+case class Reg(senz: String)
 
 case class RegDone()
 
@@ -21,89 +27,97 @@ case class Registered()
 /**
  * Created by eranga on 1/22/16.
  */
-class RegistrationHandler(socket: DatagramSocket) extends Actor with Configuration {
+class RegistrationHandler() extends Actor with Configuration with Sender {
 
   import context._
 
-  private var scheduler: Cancellable = _
+  val senzSender = context.actorSelection("/user/SenzSender")
+  val pingSender = context.actorSelection("/user/PingSender")
+  val senzReader = context.actorSelection("/user/SenzReader")
 
-  override def preStart(): Unit = {
-    println("----started----- " + context.self.path)
-    import scala.concurrent.duration._
-    scheduler = context.system.scheduler.schedule(
-      initialDelay = 0 seconds,
-      interval = 5 seconds,
-      receiver = self,
-      message = RegSenz
-    )
-  }
+  val cancellable = system.scheduler.schedule(0 milliseconds, 5 seconds, self, Reg(SenzUtils.getRegistrationSenz()))
 
-  override def postStop(): Unit = {
-    scheduler.cancel()
+  override def preStart = {
+    println("----path----- " + context.self.path)
+
+    //val registrationSenz = SenzUtils.getRegistrationSenz()
+    //println(registrationSenz + "-----")
   }
 
   override def receive: Receive = {
+    case InitReg =>
+
     case RegSenz(senz, counter) =>
-      println("===================")
-      println(sender.getClass.getName)
-      println(sender.path)
-      println(context.parent.getClass)
-      println("===================")
       if (counter < 3) {
-        sendSenz(senz)
-        val future = readSenz(RegSenz(senz, counter))
-        handleSenz(RegSenz(senz, counter), future)
+        senzSender ! SendSenz(senz)
       } else {
-        // stop actor
-        println(sender.getClass.getName)
-        println(sender.path)
-        context.parent ! RegFail
+        println("timeouttt")
         context.stop(self)
       }
+
+      context.system.scheduler.scheduleOnce(5 seconds, self, RegSenz(senz, counter + 1))
+    case Reg(senz) =>
+      senzSender ! SendSenz(senz)
+    case RegDone =>
+      println("doneeeee")
+      cancellable.cancel()
+      context.stop(self)
+    case RegFail =>
+      println("faillll")
+      cancellable.cancel()
+      context.stop(self)
+    case Registered =>
+      println("registered....")
+
+      cancellable.cancel()
+      pingSender ! Ping
+      senzReader ! InitReader
+
+      context.stop(self)
   }
 
-  def sendSenz(msg: String) = {
-    val senzOut = new DatagramPacket(msg.getBytes, msg.getBytes.length, InetAddress.getByName(switchHost), switchPort)
-    socket.send(senzOut)
-  }
-
-  def readSenz(senz: RegSenz): Future[Senz] = {
-    // read response via future
-    val future = Future {
-      val bufSize = 1024
-      val buf = new Array[Byte](bufSize)
-      val senzIn = new DatagramPacket(buf, bufSize)
-      socket.receive(senzIn)
-
-      val msg = new String(senzIn.getData)
-      SenzParser.getSenz(msg)
-    }
-
-    future
-  }
-
-  def handleSenz(senz: RegSenz, future: Future[Senz]) = {
-    // handler read timeout
-    try {
-      val senzIn = Await.result(future, 3 second)
-      senzIn.attributes.get("#msg") match {
-        case Some("REGISTRATION_DONE") =>
-          println("done")
-          context.stop(self)
-        case Some("REGISTRATION_FAIL") =>
-          println("fail")
-          context.stop(self)
-        case Some("ALREADY_REGISTERED") =>
-          println("already registered...")
-          context.stop(self)
-        case _ =>
-          self ! RegSenz(senz.senz, senz.counter + 1)
-      }
-    } catch {
-      case e: TimeoutException =>
-        println(e.toString)
-        self ! RegSenz(senz.senz, senz.counter + 1)
-    }
-  }
+  //  def sendSenz(msg: String) = {
+  //    val senzOut = new DatagramPacket(msg.getBytes, msg.getBytes.length, InetAddress.getByName(switchHost), switchPort)
+  //    socket.send(senzOut)
+  //  }
+  //
+  //  def readSenz(senz: RegSenz): Future[Senz] = {
+  //    // read response via future
+  //    val future = Future {
+  //      val bufSize = 1024
+  //      val buf = new Array[Byte](bufSize)
+  //      val senzIn = new DatagramPacket(buf, bufSize)
+  //      socket.receive(senzIn)
+  //
+  //      val msg = new String(senzIn.getData)
+  //      SenzParser.getSenz(msg)
+  //    }
+  //
+  //    future
+  //  }
+  //
+  //  def handleSenz(senz: RegSenz, future: Future[Senz]) = {
+  //    // handler read timeout
+  //    try {
+  //      val senzIn = Await.result(future, 3 second)
+  //      senzIn.attributes.get("#msg") match {
+  //        case Some("REGISTRATION_DONE") =>
+  //          println("done")
+  //          context.stop(self)
+  //        case Some("REGISTRATION_FAIL") =>
+  //          println("fail")
+  //          context.stop(self)
+  //        case Some("ALREADY_REGISTERED") =>
+  //          println("already registered...")
+  //          context.stop(self)
+  //        case _ =>
+  //          self ! RegSenz(senz.senz, senz.counter + 1)
+  //      }
+  //    } catch {
+  //      case e: TimeoutException =>
+  //        println(e.toString)
+  //        self ! RegSenz(senz.senz, senz.counter + 1)
+  //    }
+  //  }
 
 }

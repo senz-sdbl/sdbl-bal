@@ -1,6 +1,6 @@
 package actors.handlers
 
-import actors.Send
+import actors.SendSenz
 import akka.actor.Actor
 
 import scala.concurrent.duration._
@@ -33,7 +33,7 @@ class AgentRegistrationHandler extends Actor {
   override def receive: Receive = {
     case Message(senz, counter) =>
       if (counter < 3) {
-        senzSender ! Send(senz)
+        senzSender ! SendSenz(senz)
         context.system.scheduler.scheduleOnce(8 seconds, self, Message(senz, counter + 1))
       } else {
         // stop actor

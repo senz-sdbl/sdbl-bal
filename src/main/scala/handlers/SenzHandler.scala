@@ -1,6 +1,6 @@
 package handlers
 
-import actors.handlers.{AlreadyRegistered, RegistrationDone, RegistrationFail}
+import actors.handlers._
 import akka.actor.ActorContext
 import utils.{Senz, SenzType}
 
@@ -22,6 +22,7 @@ object SenzHandler {
         handlerShare(senz)
       case Senz(SenzType.DATA, sender, receiver, attr, signature) =>
         val senz = Senz(SenzType.DATA, sender, receiver, attr, signature)
+        println("Data senz recived")
         handleData(senz)
       case Senz(SenzType.PING, _, _, _, _) =>
       // we ignore ping messages
@@ -41,18 +42,20 @@ object SenzHandler {
   }
 
   def handleData(senz: Senz)(implicit context: ActorContext) = {
-    val reg = context.actorSelection("/user/SenzReader/AgentRegistrationHandler")
+    //val reg = context.actorSelection("/user/SenzReader/AgentRegistrationHandler")
+    val init = context.actorSelection("/user/SenzSender/RegistrationHandler")
 
     senz.attributes.get("#msg") match {
       case Some("ShareDone") =>
       case Some("ShareFail") =>
       case Some("UserCreated") =>
       case Some("REGISTRATION_DONE") =>
-        reg ! RegistrationDone
+        init ! RegDone
       case Some("REGISTRATION_FAIL") =>
-        reg ! RegistrationFail
+        init ! RegFail
       case Some("ALREADY_REGISTERED") =>
-        reg ! AlreadyRegistered
+        println("alread registered")
+        init ! Registered
       case other =>
         println(s"not supported message $other")
     }

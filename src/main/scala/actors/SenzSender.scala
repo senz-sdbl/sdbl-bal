@@ -2,11 +2,14 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
-import akka.actor.Actor
+import actors.handlers.{RegSenz, RegistrationHandler}
+import akka.actor.{Props, Actor}
 import config.Configuration
+import utils.SenzUtils
 
+case class InitSender()
 
-case class Send(msg: String)
+case class SendSenz(msg: String)
 
 
 /**
@@ -19,7 +22,11 @@ class SenzSender(socket: DatagramSocket) extends Actor with Configuration {
   }
 
   override def receive: Receive = {
-    case Send(msg) =>
+    case InitSender =>
+      context.actorOf(Props[RegistrationHandler], "RegistrationHandler")
+      //handler ! RegSenz(registrationSenz, 0)
+      //sendSenz(registrationSenz)
+    case SendSenz(msg) =>
       println("send message " + msg)
 
       // TODO validate sign, encrypt the senz
