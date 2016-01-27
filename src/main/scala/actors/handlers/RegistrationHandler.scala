@@ -3,13 +3,8 @@ package actors.handlers
 import actors.{InitReader, Ping, SendSenz, Sender}
 import akka.actor.Actor
 import config.Configuration
-import utils.SenzUtils
 
 import scala.concurrent.duration._
-
-case class InitReg()
-
-case class RegSenz(senz: String, counter: Int)
 
 case class Reg(senz: String)
 
@@ -22,7 +17,7 @@ case class Registered()
 /**
  * Created by eranga on 1/22/16.
  */
-class RegistrationHandler() extends Actor with Configuration with Sender {
+class RegistrationHandler(regSenz: String) extends Actor with Configuration with Sender {
 
   import context._
 
@@ -31,7 +26,6 @@ class RegistrationHandler() extends Actor with Configuration with Sender {
   val senzReader = context.actorSelection("/user/SenzReader")
 
   // scheduler to run on 5 seconds
-  val regSenz = SenzUtils.getRegistrationSenz()
   val cancellable = system.scheduler.schedule(0 milliseconds, 4 seconds, self, Reg(regSenz))
 
   override def preStart = {

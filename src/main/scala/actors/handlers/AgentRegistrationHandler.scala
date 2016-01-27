@@ -5,48 +5,39 @@ import akka.actor.Actor
 
 import scala.concurrent.duration._
 
-case class Message(senz: String, counter: Int)
+case class Message(senz: String)
 
 case class RegistrationDone()
 
 case class RegistrationFail()
 
-case class AlreadyRegistered()
-
-case class ShareDone()
-
-case class ShareFail()
 
 /**
  * Created by eranga on 1/12/16.
  */
-class AgentRegistrationHandler extends Actor {
+class AgentRegistrationHandler(regSenz: String) extends Actor {
 
   import context._
+
+  val senzSender = context.actorSelection("/user/SenzSender")
+  val cancellable = system.scheduler.schedule(0 milliseconds, 4 seconds, self, Message(regSenz))
 
   override def preStart = {
     println("----started----- " + context.self.path)
   }
 
-  val senzSender = context.actorSelection("/user/SenzSender")
-
   override def receive: Receive = {
-    case Message(senz, counter) =>
-      if (counter < 3) {
-        senzSender ! SendSenz(senz)
-        context.system.scheduler.scheduleOnce(8 seconds, self, Message(senz, counter + 1))
-      } else {
-        // stop actor
-        context.stop(self)
-      }
+    case Message(senz) =>
+      senzSender ! SendSenz(senz)
     case RegistrationDone =>
       // success
-      context.stop(self)
-    case AlreadyRegistered =>
-      // already registered user
+      println("Registration done")
+      cancellable.cancel()
       context.stop(self)
     case RegistrationFail =>
       // fail
       println("Registration fail")
+      cancellable.cancel()
+      context.stop(self)
   }
 }

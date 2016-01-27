@@ -42,20 +42,20 @@ object SenzHandler {
   }
 
   def handleData(senz: Senz)(implicit context: ActorContext) = {
-    //val reg = context.actorSelection("/user/SenzReader/AgentRegistrationHandler")
-    val init = context.actorSelection("/user/SenzSender/RegistrationHandler")
+    val regActor = context.actorSelection("/user/SenzSender/RegistrationHandler")
+    val agentRegActor = context.actorSelection("/user/SenzReader/AgentRegistrationHandler")
 
     senz.attributes.get("#msg") match {
       case Some("ShareDone") =>
+        agentRegActor ! RegistrationDone
       case Some("ShareFail") =>
-      case Some("UserCreated") =>
+        agentRegActor ! RegistrationFail
       case Some("REGISTRATION_DONE") =>
-        init ! RegDone
+        regActor ! RegDone
       case Some("REGISTRATION_FAIL") =>
-        init ! RegFail
+        regActor ! RegFail
       case Some("ALREADY_REGISTERED") =>
-        println("alread registered")
-        init ! Registered
+        regActor ! Registered
       case other =>
         println(s"not supported message $other")
     }

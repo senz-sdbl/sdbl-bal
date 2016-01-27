@@ -1,7 +1,7 @@
 package actors
 
-import actors.handlers.{Message, AgentRegistrationHandler}
-import akka.actor.{Props, Actor}
+import actors.handlers.AgentRegistrationHandler
+import akka.actor.{Actor, Props}
 import crypto.RSAUtils
 
 case class InitReader()
@@ -29,9 +29,10 @@ class SenzReader extends Actor {
           val signature = RSAUtils.signSenz(inputSenz.trim)
           val signedSenz = s"$inputSenz $signature"
 
+          println(signedSenz)
+
           // start actor to handle the senz
-          //val handler = context.actorOf(Props(new AgentRegistrationHandler), "AgentRegistrationHandler")
-          //handler ! Message(signedSenz, 0)
+          context.actorOf(Props(classOf[AgentRegistrationHandler], signedSenz), "AgentRegistrationHandler")
         }
       }
     }
