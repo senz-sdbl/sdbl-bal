@@ -2,12 +2,15 @@ package handlers
 
 import actors.handlers._
 import akka.actor.ActorContext
+import components.BalDbComp
 import utils.{Senz, SenzType}
 
 /**
  * Created by eranga on 1/14/16.
  */
 object SenzHandler {
+
+  this: BalDbComp =>
 
   def handle(senz: Senz)(implicit context: ActorContext) = {
     senz match {
