@@ -5,6 +5,8 @@ import akka.actor.ActorContext
 import components.BalDbComp
 import utils.{Senz, SenzType}
 
+case class SignatureVerificationFailed()
+
 /**
  * Created by eranga on 1/14/16.
  */
@@ -59,6 +61,9 @@ object SenzHandler {
         regActor ! RegFail
       case Some("ALREADY_REGISTERED") =>
         regActor ! Registered
+      case Some("SignatureVerificationFailed") =>
+        println(s"virification failed")
+        context.actorSelection("/user/Senz*") ! SignatureVerificationFailed
       case other =>
         println(s"not supported message $other")
     }

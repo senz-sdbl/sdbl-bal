@@ -26,8 +26,8 @@ class SenzReader extends Actor {
 
         if (!inputSenz.isEmpty) {
           // sign senz
-          val signature = RSAUtils.signSenz(inputSenz.trim)
-          val signedSenz = s"$inputSenz $signature"
+          val senzSignature = RSAUtils.signSenz(inputSenz.trim.replaceAll(" ", ""))
+          val signedSenz = s"$inputSenz $senzSignature"
 
           println(signedSenz)
 
