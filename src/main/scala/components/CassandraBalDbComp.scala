@@ -5,7 +5,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder._
 import db.SenzCassandraCluster
 
 /**
- * Created by eranga on 2/2/16.
+ * Created by eranga on 2/2/16
  */
 trait CassandraBalDbComp extends BalDbComp {
 
@@ -60,10 +60,16 @@ trait CassandraBalDbComp extends BalDbComp {
     }
 
     override def updateBalance(balance: Balance) = {
+      // update query
+      val statement = QueryBuilder.update("balance")
+        .`with`(set("status", balance.status))
+        .where(QueryBuilder.eq("timestamp", balance.timestamp)).and(QueryBuilder.eq("agent", balance.agent))
 
+      session.execute(statement)
     }
 
     override def getBalance(agent: String, timestamp: String): Balance = {
+      // select query
       val selectStmt = select().all()
         .from("balance")
         .where(QueryBuilder.eq("agent_id", "1")).and(QueryBuilder.eq("timestamp", "w234234"))

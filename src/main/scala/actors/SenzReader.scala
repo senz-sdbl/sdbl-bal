@@ -19,6 +19,13 @@ class SenzReader extends Actor {
     case InitReader => {
       // listen for user inputs form commandline
       while (true) {
+        println()
+        println()
+        println("--------------------------------------------------")
+        println("ENTER #SENZ[SHARE #nic #nam #acc @agent_ ^sdblbal]")
+        println("--------------------------------------------------")
+        println()
+
         // read user input from the command line
         val inputSenz = scala.io.StdIn.readLine()
 
@@ -29,10 +36,10 @@ class SenzReader extends Actor {
           val senzSignature = RSAUtils.signSenz(inputSenz.trim.replaceAll(" ", ""))
           val signedSenz = s"$inputSenz $senzSignature"
 
-          println(signedSenz)
+          //println(signedSenz)
 
           // start actor to handle the senz
-          context.actorOf(Props(classOf[AgentRegistrationHandler], signedSenz), "AgentRegistrationHandler")
+          context.actorOf(Props(classOf[AgentRegistrationHandler], signedSenz))
         }
       }
     }

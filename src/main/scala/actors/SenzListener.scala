@@ -2,8 +2,10 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket}
 
-import _root_.handlers.SenzHandler
+import _root_.handlers.SHandler
 import akka.actor.Actor
+import components.CassandraBalDbComp
+import db.SenzCassandraCluster
 import utils.SenzParser
 
 case class InitListener()
@@ -12,6 +14,10 @@ case class InitListener()
  * Created by eranga on 1/9/16.
  */
 class SenzListener(socket: DatagramSocket) extends Actor {
+
+  trait SHand extends CassandraBalDbComp with SenzCassandraCluster
+
+  val shand = new SHandler with SHand
 
   override def preStart = {
     println("----path----- " + context.self.path)
@@ -33,7 +39,7 @@ class SenzListener(socket: DatagramSocket) extends Actor {
         // handle received senz
         // parse senz first
         val senz = SenzParser.getSenz(msg)
-        SenzHandler.handle(senz)
+        shand.SenzHandler.handle(senz)
       }
     }
   }

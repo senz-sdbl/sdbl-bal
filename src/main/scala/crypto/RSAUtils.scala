@@ -3,6 +3,7 @@ package crypto
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.security._
 import java.security.spec.{PKCS8EncodedKeySpec, X509EncodedKeySpec}
+import javax.crypto.Cipher
 
 import config.Configuration
 import sun.misc.{BASE64Decoder, BASE64Encoder}
@@ -94,10 +95,24 @@ object RSAUtils extends Configuration {
     val publicKey = keyPair.getPublic
 
     val signature = Signature.getInstance("SHA256withRSA");
-    signature.initVerify(publicKey);
-    signature.update(payload.getBytes);
+    signature.initVerify(publicKey)
+    signature.update(payload.getBytes)
 
     // decode(BASE64) signed payload and verify signature
     signature.verify(new BASE64Decoder().decodeBuffer(signedPayload));
   }
+
+  def encrypt(payload: String, publicKey: PublicKey) = {
+    val cipher: Cipher = Cipher.getInstance("RSA")
+    cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+
+    cipher.doFinal(payload.getBytes)
+  }
+
+  def decrypt(payload: Array[Byte], privateKey: PrivateKey) = {
+    val cipher: Cipher = Cipher.getInstance("RSA")
+    cipher.init(Cipher.DECRYPT_MODE, privateKey)
+    new String(cipher.doFinal(payload))
+  }
+
 }
