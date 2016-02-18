@@ -1,8 +1,7 @@
-package actors.handlers
+package actors
 
-import actors.SendSenz
+import _root_.handlers.SignatureVerificationFailed
 import akka.actor.Actor
-import handlers.SignatureVerificationFailed
 
 import scala.concurrent.duration._
 

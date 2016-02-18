@@ -1,6 +1,5 @@
 package actors
 
-import actors.handlers.AgentRegistrationHandler
 import akka.actor.{Actor, Props}
 import crypto.RSAUtils
 

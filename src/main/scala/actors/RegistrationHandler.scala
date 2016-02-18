@@ -1,9 +1,8 @@
-package actors.handlers
+package actors
 
-import actors.{InitReader, Ping, SendSenz, Sender}
+import _root_.handlers.SignatureVerificationFailed
 import akka.actor.Actor
 import config.Configuration
-import handlers.SignatureVerificationFailed
 
 import scala.concurrent.duration._
 
@@ -18,7 +17,7 @@ case class Registered()
 /**
  * Created by eranga on 1/22/16.
  */
-class RegistrationHandler(regSenz: String) extends Actor with Configuration with Sender {
+class RegistrationHandler(regSenz: String) extends Actor with Configuration {
 
   import context._
 

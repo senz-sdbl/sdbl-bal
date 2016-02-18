@@ -1,4 +1,4 @@
-package actors.handlers
+package actors
 
 import akka.actor.Actor
 

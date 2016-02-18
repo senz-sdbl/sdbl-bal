@@ -3,13 +3,15 @@ package boot
 import java.net.DatagramSocket
 
 import actors._
-import akka.actor.Props
+import akka.actor.{ActorSystem, Props}
 import crypto.RSAUtils
 
 /**
  * Created by eranga on 1/9/16.
  */
-object Main extends App with SenzActorSystem {
+object Main extends App {
+  implicit val system = ActorSystem("senz")
+
   // this is the datagram socket that uses to connect to senz switch
   val socket = new DatagramSocket()
 

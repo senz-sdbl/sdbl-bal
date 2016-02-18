@@ -2,7 +2,6 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 
-import actors.handlers.RegistrationHandler
 import akka.actor.{Actor, Props}
 import config.Configuration
 import utils.SenzUtils

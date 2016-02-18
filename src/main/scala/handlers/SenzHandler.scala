@@ -1,6 +1,6 @@
 package handlers
 
-import actors.handlers._
+import actors._
 import akka.actor.ActorContext
 import components.BalDbComp
 import utils.{Senz, SenzType}
