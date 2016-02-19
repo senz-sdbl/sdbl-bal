@@ -2,10 +2,11 @@ package actors
 
 import java.net.{DatagramPacket, DatagramSocket}
 
-import _root_.handlers.SHandler
 import akka.actor.Actor
 import components.CassandraBalDbComp
+import handlers.SenzHandler
 import db.SenzCassandraCluster
+import org.slf4j.LoggerFactory
 import utils.SenzParser
 
 case class InitListener()
@@ -15,12 +16,12 @@ case class InitListener()
  */
 class SenzListener(socket: DatagramSocket) extends Actor {
 
-  trait SHand extends CassandraBalDbComp with SenzCassandraCluster
+  val senzHandler = new SenzHandler with CassandraBalDbComp with SenzCassandraCluster
 
-  val shand = new SHandler with SHand
+  def logger = LoggerFactory.getLogger(this.getClass)
 
   override def preStart = {
-    println("----path----- " + context.self.path)
+    logger.debug("Start actor: " + context.self.path)
   }
 
   override def receive: Receive = {
@@ -36,10 +37,12 @@ class SenzListener(socket: DatagramSocket) extends Actor {
         socket.receive(senzIn)
         val msg = new String(senzIn.getData)
 
+        logger.debug("Senz received: " + msg)
+
         // handle received senz
         // parse senz first
         val senz = SenzParser.getSenz(msg)
-        shand.SenzHandler.handle(senz)
+        senzHandler.Handler.handle(senz)
       }
     }
   }

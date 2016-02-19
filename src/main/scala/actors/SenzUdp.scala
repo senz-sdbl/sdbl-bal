@@ -47,7 +47,7 @@ class SenzUdp(remote: InetSocketAddress) extends Actor {
     case UdpConnected.Disconnected =>
       // reconnect after disconnecting
       IO(UdpConnected) ! UdpConnected.Connect(self, remote)
-    //context.stop(self)
-    // TODO reconnect
+      //context.stop(self)
+      // TODO reconnect
   }
 }

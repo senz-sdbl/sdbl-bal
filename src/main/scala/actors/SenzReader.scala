@@ -2,6 +2,7 @@ package actors
 
 import akka.actor.{Actor, Props}
 import crypto.RSAUtils
+import org.slf4j.LoggerFactory
 
 case class InitReader()
 
@@ -10,8 +11,10 @@ case class InitReader()
  */
 class SenzReader extends Actor {
 
+  def logger = LoggerFactory.getLogger(this.getClass)
+
   override def preStart = {
-    println("----started----- " + context.self.path)
+    logger.debug("Start actor: " + context.self.path)
   }
 
   override def receive: Receive = {
@@ -35,10 +38,13 @@ class SenzReader extends Actor {
           val senzSignature = RSAUtils.signSenz(inputSenz.trim.replaceAll(" ", ""))
           val signedSenz = s"$inputSenz $senzSignature"
 
-          //println(signedSenz)
+          logger.error("Input Senz: " + inputSenz)
+          logger.error("Signed Senz: " + signedSenz)
 
           // start actor to handle the senz
           context.actorOf(Props(classOf[AgentRegistrationHandler], signedSenz))
+        } else {
+          logger.error("Empty Senz")
         }
       }
     }

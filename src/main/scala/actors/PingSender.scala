@@ -1,6 +1,7 @@
 package actors
 
 import akka.actor.Actor
+import org.slf4j.LoggerFactory
 import utils.SenzUtils
 import scala.concurrent.duration._
 
@@ -15,8 +16,10 @@ class PingSender extends Actor {
 
   import context._
 
+  def logger = LoggerFactory.getLogger(this.getClass)
+
   override def preStart = {
-    println("----started----- " + context.self.path)
+    logger.debug("Start actor: " + context.self.path)
   }
 
   val senzSender = context.actorSelection("/user/SenzSender")
@@ -24,10 +27,13 @@ class PingSender extends Actor {
   override def receive: Receive = {
     case InitPing =>
       // initialize periodic ping messages
+      logger.debug("INIT PING")
       self ! Ping
 
     case Ping =>
-      // send ping via senz udp
+      logger.debug("PING")
+
+      // send ping via sender
       val ping = SenzUtils.getPingSenz()
       senzSender ! SendSenz(ping)
 

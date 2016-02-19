@@ -3,6 +3,7 @@ package actors
 import _root_.handlers.SignatureVerificationFailed
 import akka.actor.Actor
 import config.Configuration
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
 
@@ -31,26 +32,28 @@ class RegistrationHandler(regSenz: String) extends Actor with Configuration {
   // send timeout message after 12 seconds
   val timeoutCancellable = system.scheduler.scheduleOnce(10 seconds, self, RegTimeout)
 
+  def logger = LoggerFactory.getLogger(this.getClass)
+
   override def preStart = {
-    println("----path----- " + context.self.path)
+    logger.debug("Start actor: " + context.self.path)
   }
 
   override def receive: Receive = {
     case Reg(senz) =>
-      println("send regmsg " + senz)
+      logger.debug("Reg: " + senz)
       senzSender ! SendSenz(senz)
     case RegDone =>
-      println("reg done")
+      logger.debug("RegDone")
       cancellable.cancel()
       timeoutCancellable.cancel()
       context.stop(self)
     case RegFail =>
-      println("reg fail")
+      logger.error("RegFail")
       cancellable.cancel()
       timeoutCancellable.cancel()
       context.stop(self)
     case Registered =>
-      println("already reg....")
+      logger.debug("Registered")
 
       // cancel scheduler
       cancellable.cancel()
@@ -63,7 +66,7 @@ class RegistrationHandler(regSenz: String) extends Actor with Configuration {
       // stop the actor
       context.stop(self)
     case SignatureVerificationFailed =>
-      println("singature virification failed")
+      logger.error("SignatureVerificationFailed")
 
       // cancel scheduler
       cancellable.cancel()
@@ -72,7 +75,7 @@ class RegistrationHandler(regSenz: String) extends Actor with Configuration {
       // stop the actor
       context.stop(self)
     case RegTimeout =>
-      println("Timeouttttt")
+      logger.error("RegTimeout")
 
       // cancel scheduler
       cancellable.cancel()
