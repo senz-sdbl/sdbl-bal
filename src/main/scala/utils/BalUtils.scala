@@ -3,20 +3,20 @@ package utils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import protocols.{BalMsg, BalResp, Senz, Trans}
+import protocols.{BalMsg, BalResp, Senz, Bal}
 
 object BalUtils {
-  def getBal(senz: Senz): Trans = {
+  def getBal(senz: Senz): Bal = {
     val agent = senz.sender
     val customer = senz.attributes.getOrElse("acc", "")
     val amnt = senz.attributes.getOrElse("amnt", "").toInt
     val timestamp = senz.attributes.getOrElse("time", "")
 
-    Trans(agent, customer, amnt, timestamp, "PENDING")
+    Bal(agent, customer, amnt, timestamp, "PENDING")
   }
 
-  def getBalMsg(trans: Trans) = {
-    val fundTranMsg = generateFundTransMsg(trans)
+  def getBalMsg(bal: Bal) = {
+    val fundTranMsg = generateFundTransMsg(bal)
     val esh = generateEsh
     val msg = s"$esh$fundTranMsg"
     val header = generateHeader(msg)
@@ -24,7 +24,7 @@ object BalUtils {
     BalMsg(header ++ msg.getBytes)
   }
 
-  def generateFundTransMsg(trans: Trans) = {
+  def generateFundTransMsg(bal: Bal) = {
     val transId = "0000000000000001" // transaction ID, 16 digits // TODO generate unique value
     val payMode = "02" // pay mode
     val epinb = "ffffffffffffffff" // ePINB, 16 digits
@@ -32,7 +32,7 @@ object BalUtils {
     val mobileNo = "0775432015" // customers mobile no
     val fromAcc = "343434343434" // TODO trans.agent // from account, bank account, 12 digits
     val toAcc = "646464646464" // TODO trans.account // to account, customer account, 12 digits
-    val amnt = "%012d".format(trans.amount) // amount, 12 digits
+    val amnt = "%012d".format(bal.amount) // amount, 12 digits
     //val amnt = trans.amount // amount, 12 digits
 
     s"$transId$payMode$epinb$offset$mobileNo$fromAcc$toAcc$amnt"

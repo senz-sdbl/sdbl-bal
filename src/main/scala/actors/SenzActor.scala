@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
+import components.CassandraBalDbComp
 import config.Configuration
 import crypto.RSAUtils
 import db.SenzCassandraCluster
@@ -98,15 +99,15 @@ class SenzActor extends Actor with Configuration {
       val senzMsg = data.decodeString("UTF-8")
       logger.debug("Received senzMsg : " + senzMsg)
 
-      // only handle trans here
+      // only handle bal here
       // parse senz first
       val senz = SenzParser.getSenz(senzMsg)
       senz match {
         case Senz(SenzType.GET, sender, receiver, attr, signature) =>
           // handle request via bal actor
           val bal = BalUtils.getBal(senz)
-          val transHandlerComp = new TransHandlerComp with CassandraTransDbComp with SenzCassandraCluster
-          context.actorOf(transHandlerComp.TransHandler.props(trans))
+          val balHandlerComp = new BalHandlerComp with CassandraBalDbComp with SenzCassandraCluster
+          context.actorOf(balHandlerComp.BalHandler.props(bal))
         case any =>
           logger.debug(s"Not support other messages $data this stats")
       }
