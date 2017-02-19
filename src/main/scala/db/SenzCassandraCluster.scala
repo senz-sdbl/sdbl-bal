@@ -16,5 +16,5 @@ trait SenzCassandraCluster extends Configuration {
       build()
   }
 
-  lazy val session: Session = cluster.connect(cassandraKeyspace)
+  lazy val session: Session = cluster.connect("senz")
 }

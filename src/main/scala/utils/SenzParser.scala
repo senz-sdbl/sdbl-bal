@@ -1,22 +1,16 @@
 package utils
 
-object SenzType extends Enumeration {
-  type SenzType = Value
-  val SHARE, GET, PUT, DATA, PING = Value
-}
+import protocols.{SenzType, Senz}
 
-import SenzType._
-
-case class Senz(senzType: SenzType, sender: String, receiver: String, attributes: scala.collection.mutable.Map[String, String], signature: String)
 
 /**
  * Created by eranga on 1/10/16.
  */
 object SenzParser {
-  def getSenz(msg: String): Senz = {
-    val tokens = msg.split(" ")
+  def getSenz(senzMsg: String): Senz = {
+    val tokens = senzMsg.split(" ")
     val senzType = SenzType.withName(tokens.head)
-    val signature = tokens.last
+    val signature = if (tokens.last.startsWith("^")) None else Some(tokens.last.trim)
     var sender = ""
     var receiver = ""
     val attr = scala.collection.mutable.Map[String, String]()
@@ -28,16 +22,16 @@ object SenzParser {
     while (i < tokens.length) {
       if (tokens(i).startsWith("@")) {
         // receiver
-        sender = tokens(i)
+        receiver = tokens(i).substring(1)
       } else if (tokens(i).startsWith("^")) {
         // sender
-        receiver = tokens(i)
+        sender = tokens(i).substring(1)
       } else if (tokens(i).startsWith("#")) {
         // attribute
         if (tokens(i + 1).startsWith("#") || tokens(i + 1).startsWith("@") | tokens(i + 1).startsWith("^")) {
-          attr(tokens(i)) = ""
+          attr(tokens(i).substring(1)) = ""
         } else {
-          attr(tokens(i)) = tokens(i + 1)
+          attr(tokens(i).substring(1)) = tokens(i + 1)
           i += 1
         }
       }
@@ -48,6 +42,28 @@ object SenzParser {
     Senz(senzType, sender, receiver, attr, signature)
   }
 
-  def getSenzPayload(senz: Senz) = {
+  def getSenzMsg(senz: Senz): String = {
+    // attributes comes as
+    //    1. #lat 3.432 #lon 23.343
+    //    2. #lat #lon
+    var attr = ""
+    for ((k, v) <- senz.attributes) {
+      attr += s"#$k $v".trim + " "
+    }
+
+    s"${senz.senzType} ${attr.trim} @${senz.receiver} ^${senz.sender} ${senz.signature}"
   }
 }
+
+//object Main extends App {
+//  val senz = SenzParser.getSenz("SHARE #lat #lon sdf @era ^bal")
+//
+//  println(senz.senzType)
+//  println(senz.attributes)
+//  println(senz.receiver)
+//  println(senz.sender)
+//  println(senz.signature)
+//
+//  val msg = SenzParser.getSenzMsg(senz)
+//  println(msg)
+//}
