@@ -13,7 +13,7 @@ docker run -it \
 -e EPIC_PORT=8200 \
 -e CASSANDRA_HOST=10.2.2.23 \
 -e CASSANDRA_PORT=9042 \
--v /Users/eranga/sdbl/bal/logs:/app/logs:rw \
--v /Users/eranga/sdbl/bal/.keys:/app/.keys:rw \
+-v /home/eranga/sdbl/logs:/app/logs:rw \
+-v /home/eranga/sdbl/keys:/app/.keys:rw \
 senz/sdbl-bal
 ```

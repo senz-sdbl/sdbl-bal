@@ -6,10 +6,8 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import components.CassandraBalDbComp
 import config.Configuration
 import crypto.RSAUtils
-import db.SenzCassandraCluster
 import org.slf4j.LoggerFactory
 import protocols.{Senz, SenzType}
 import utils.{BalUtils, SenzParser, SenzUtils}
@@ -106,8 +104,7 @@ class SenzActor extends Actor with Configuration {
         case Senz(SenzType.GET, sender, receiver, attr, signature) =>
           // handle request via bal actor
           val bal = BalUtils.getBal(senz)
-          val balHandlerComp = new BalHandlerComp with CassandraBalDbComp with SenzCassandraCluster
-          context.actorOf(balHandlerComp.BalHandler.props(bal))
+          context.actorOf(BalHandler.props(bal))
         case any =>
           logger.debug(s"Not support other messages $data this stats")
       }
