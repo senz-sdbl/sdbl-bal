@@ -91,8 +91,7 @@ object AccInquiryUtils {
   def getAccInqResp(response: String) = {
     AccInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 80), response.substring(82))
     //Should be like AccInqResp(esh: String, resCode: String, authCode: String, accNumbers: String)
-    //                          0-70              77-79
-    // TODO
+
   }
 
 }
