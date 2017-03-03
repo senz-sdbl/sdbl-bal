@@ -3,53 +3,77 @@ package utils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import protocols.{BalMsg, BalResp, Senz, Bal}
+import protocols.{BalInqMsg, BalInqResp}
+import protocols.{BalInq, Senz}
 
-object BalUtils {
-  def getBal(senz: Senz): Bal = {
+/**
+  * Created by senz on 2/13/17.
+  */
+object BalanceUtils {
+  def getBalInq(senz: Senz): BalInq = {
     val agent = senz.sender
-    val customer = senz.attributes.getOrElse("acc", "")
-    val amnt = senz.attributes.getOrElse("amnt", "").toInt
-    val timestamp = senz.attributes.getOrElse("time", "")
+    val customer = senz.attributes.getOrElse("balacc", "")
 
-    Bal(agent, customer, amnt, timestamp, "PENDING")
+    BalInq(agent, customer)
   }
 
-  def getBalMsg(bal: Bal) = {
-    val fundTranMsg = generateFundTransMsg(bal)
+  def getBalInqMsg(balInq: BalInq) = {
+    val fundTranMsg = generateBalInqMsg(balInq)
     val esh = generateEsh
     val msg = s"$esh$fundTranMsg"
     val header = generateHeader(msg)
 
-    BalMsg(header ++ msg.getBytes)
+    BalInqMsg(header ++ msg.getBytes)
+
   }
 
-  def generateFundTransMsg(bal: Bal) = {
-    val transId = "0000000000000001" // transaction ID, 16 digits // TODO generate unique value
-    val payMode = "02" // pay mode
-    val epinb = "ffffffffffffffff" // ePINB, 16 digits
-    val offset = "ffffffffffff" // offset, 12 digits
-    val mobileNo = "0775432015" // customers mobile no
-    val fromAcc = "343434343434" // TODO trans.agent // from account, bank account, 12 digits
-    val toAcc = "646464646464" // TODO trans.account // to account, customer account, 12 digits
-    val amnt = "%012d".format(bal.amount) // amount, 12 digits
-    //val amnt = trans.amount // amount, 12 digits
+  def generateBalInqMsg(balInq: BalInq) = {
 
-    s"$transId$payMode$epinb$offset$mobileNo$fromAcc$toAcc$amnt"
+    val pip = "|"
+    // terminating pip for all attributes
+    val rnd = new scala.util.Random
+    //  genaration of transaction ID
+    val randomInt = 100000 + rnd.nextInt(900000)
+    //  random num of 6 digits
+    val transId = s"$randomInt$getBalInqTime" // random in of length 6 and time stamp of 10 digits
+
+    val payMode = "02"
+    // pay mode
+    val ePINB = "ffffffffffffffff"
+    // ePINB, 16 digits
+    val offset = "ffffffffffff" // offset, 12 digits
+
+    val balAcc = balInq.customer
+    val mobileNo = "0123456789" // a hard coded value for the mobile
+
+    s"$transId$pip$payMode$pip$balAcc$pip$ePINB$pip$offset$pip$mobileNo"
   }
 
   def generateEsh = {
-    val a = "SMS" // incoming channel mode[mobile]
-    val b = "01" // transaction process type[financial]
-    val c = "04" // transaction code[fund transfer]
-    val d = "00000002" // TID, 8 digits TODO in prod 00000001
-    val e = "000000000000002" // MID, 15 digits TODO in prod 000000000000001
-    val f = "000001" // trace no, 6 digits TODO generate this
-    val g = getTime // date time MMDDHHMMSS
-    val h = "0001" // application ID, 4 digits
+    val pip = "|"
+    // add a pip after the ESH
+    val a = "SMS"
+    // incoming channel mode[mobile]
+    val b = "01"
+    // transaction process type[financial]
+    val c = "03"
+    // transaction code[Cash deposit{UCSC}]
+    val d = "00000002"
+    // TID, 8 digits
+    val e = "000000000000002"
+    // MID, 15 digits
+    val rnd = new scala.util.Random
+    // genaration of trace no
+    val f = 100000 + rnd.nextInt(900000)
+    // genaration of trace no
+    val g = getBalInqTime
+    // date time MMDDHHMMSS
+    val h = "0001"
+    // application ID, 4 digits
     val i = "0000000000000000" // private data, 16 digits
 
-    s"$a$b$c$d$e$f$g$h$i"
+
+    s"$a$b$c$d$e$f$g$h$i$pip"
   }
 
   def generateHeader(msg: String) = {
@@ -59,32 +83,34 @@ object BalUtils {
     hexLen.replaceAll("[^0-9A-Fa-f]", "").sliding(2, 2).toArray.map(Integer.parseInt(_, 16).toByte)
   }
 
-  def getTime = {
+  def getBalInqTime = {
     val now = Calendar.getInstance().getTime
     val format = new SimpleDateFormat("MMddhhmmss")
 
     format.format(now)
   }
 
-  def getBalResp(response: String) = {
-    BalResp(response.substring(0, 70), response.substring(70, 72), response.substring(72))
+  def getBalInqResp(response: String) = {
+    BalInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 76), response.substring(80))
+    //              ESH                       rescoed                   authcode                balance
+
   }
+
 
 }
 
-//object Main extends App {
-//  val agent = "222222222222"
-//  val customer = "555555555555"
-//  val msg = TransUtils.getTransMsg(Trans(agent, "3423432", customer, "250", "PENDING"))
-//  println(msg)
-//
-//
-//  TransUtils.getTransResp(msg.msg) match {
-//    case TransResp(_, "11", _) =>
-//      println("Transaction done")
-//    case TransResp(_, status, _) =>
-//      println("hoooo " + status)
-//    case transResp =>
-//      println("Invalid response " + transResp)
-//  }
-//}
+
+/*
+
+Request-message  SMS0103000000020000000000000025928140213164840000114567894562136544175375128073668|02|123456789123|3C9770FCC9D47189|000000000000|94771137156
+Request-packet   008C534D53303130333030303030303032303030303030303030303030303032353932383134303231333136343834303030303131343536373839343536323133363534343137353337353132383037333636387C30327C3132333435363738393132337C334339373730464343394434373138397C3030303030303030303030307C3934373731313337313536
+Response-packet  008A534D53303130333030303030303032303030303030303030303030303032353932383134323031372D30322D31332031363A34333A34352E3130343134353637383934353632313336353430307C3032313331363433343530317C3637383931327C30313031303030433030303030303030313030303031303130303043303030303030303031303030
+Response-message SMS0103000000020000000000000025928142017-02-13 16:43:45.104145678945621365400|021316434501|678912|0101000C0000000010000101000C000000001000
+
+      balance            01 01 000 C 000000001000      01 01 000 C 000000001000
+Response Code 00
+
+
+
+
+* */
