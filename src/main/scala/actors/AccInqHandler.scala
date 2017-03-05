@@ -102,7 +102,8 @@ class AccInqHandler(accInq: AccInq) extends Actor with Configuration {
         logger.debug(s"accs: $data")
 
         // send response back
-        val senz = s"DATA #acc $accs @${accInq.agent} ^$senzieName"
+        val testAcc = "432423456923"
+        val senz = s"DATA #acc $testAcc @${accInq.agent} ^$senzieName"
         senzActor ! SenzMsg(senz)
       case AccInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)

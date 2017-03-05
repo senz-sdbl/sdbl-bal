@@ -1,6 +1,6 @@
 package boot
 
-import actors.AccInqHandler.AccInq
+import actors.SenzActor.InitSenz
 import actors._
 import akka.actor.ActorSystem
 import crypto.RSAUtils
@@ -20,9 +20,6 @@ object Main extends App {
   RSAUtils.initRSAKeys()
 
   // start senz actor
-  //  val senzActor = system.actorOf(SenzActor.props, name = "SenzActor")
-  //  senzActor ! InitSenz
-
-  val accInq = AccInq("eranga", "781142182V")
-  system.actorOf(AccInqHandler.props(accInq))
+  val senzActor = system.actorOf(SenzActor.props, name = "SenzActor")
+  senzActor ! InitSenz
 }
