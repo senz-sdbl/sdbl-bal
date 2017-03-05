@@ -3,22 +3,19 @@ package utils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import protocols.{AccInqMsg, AccInqResp}
-import protocols.{AccInq, Senz}
+import actors.AccInqHandler.{AccInq, AccInqMsg, AccInqResp}
+import protocols.Senz
 
-/**
-  * Created by senz on 1/30/17.
-  */
+
 object AccInquiryUtils {
 
-  def getIdNumber(senz: Senz): AccInq = {
-    val idNumber = senz.attributes.getOrElse("idno", "")
+  def getAccInq(senz: Senz): AccInq = {
+    val nic = senz.attributes.getOrElse("#nic", "")
     val agent = senz.sender
-    AccInq(agent, idNumber)
+    AccInq(agent, nic)
   }
 
-  def getAccInqmsg(accInq: AccInq) = {
-
+  def getAccInqMsg(accInq: AccInq) = {
     val fundTranMsg = generateAccInqMassage(accInq)
     val esh = generateEsh
     val msg = s"$esh$fundTranMsg"
@@ -27,24 +24,30 @@ object AccInquiryUtils {
     AccInqMsg(header ++ msg.getBytes)
   }
 
-  def generateAccInqMassage(accInq: AccInq) = {
+  def getAccInqResp(response: String) = {
+    AccInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 80), response.substring(82))
+  }
 
+  private def generateAccInqMassage(accInq: AccInq) = {
     val pip = "|"
+
     // terminating pip for all attributes
-    val idNumber = accInq.idNumber
+    val nic = accInq.nic
+
+    //  generation of transaction ID
     val rnd = new scala.util.Random
-    //  genaration of transaction ID
     val randomInt = 100000 + rnd.nextInt(900000)
-    //  random num of 6 digits
-    val transId = s"$randomInt$getTransTime" // random in of length 6 and time stamp of 10 digits
+
+    // random num of 6 digits
+    // random in of length 6 and time stamp of 10 digits
+    val transId = s"$randomInt$getTransTime"
 
     val requestMode = "02" // pay mode
 
-
-    s"$transId$pip$requestMode$pip$idNumber"
+    s"$transId$pip$requestMode$pip$nic"
   }
 
-  def generateEsh() = {
+  private def generateEsh() = {
     val pip = "|"
     // add a pip after the ESH
     val a = "SMS"
@@ -67,31 +70,21 @@ object AccInquiryUtils {
     // application ID, 4 digits
     val i = "0000000000000000" // private data, 16 digits
 
-
     s"$a$b$c$d$e$f$g$h$i$pip"
-
   }
 
-  def generateHeader(msg: String) = {
+  private def generateHeader(msg: String) = {
     val hexLen = f"${Integer.toHexString(msg.getBytes.length).toUpperCase}%4s".replaceAll(" ", "0")
 
     // convert hex to bytes
     hexLen.replaceAll("[^0-9A-Fa-f]", "").sliding(2, 2).toArray.map(Integer.parseInt(_, 16).toByte)
-
   }
 
-  def getTransTime = {
+  private def getTransTime = {
     val now = Calendar.getInstance().getTime
     val format = new SimpleDateFormat("MMddhhmmss")
 
     format.format(now)
-
-  }
-
-  def getAccInqResp(response: String) = {
-    AccInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 80), response.substring(82))
-    //Should be like AccInqResp(esh: String, resCode: String, authCode: String, accNumbers: String)
-
   }
 
 }
@@ -100,6 +93,7 @@ object AccInquiryUtils {
 /*
 SUCCESS
 Request-massage   SMS010600000002000000000000002787227020310503800011456789456213654994908572057813|02|123456789v
+                  aSMS010600000002000000000000002666738030406401400010000000000000000|4196370304064014|02|781142182V
 Request-packet    005F534D533031303630303030303030323030303030303030303030303030323738373232373032303331303530333830303031313435363738393435363231333635343939343930383537323035373831337C30327C31323334353637383976
 Response-packet   00C4534D53303130363030303030303032303030303030303030303030303032373837323237323031372D30322D30332031303A34353A35372E3330383134353637383934353632313336353430307C3032303331303435353738337C3637383931327C3031233031323334353637383931302373616E736120746573743123313233347E3032233031323334353637383931312373616E736120746573743223323334357E3031233031323334353637383931322373616E73612074657374332331323334
 Response-message  SMS0106000000020000000000000027872272017-02-03 10:45:57.308145678945621365400|020310455783|678912|01#012345678910#sansa test1#1234~02#012345678911#sansa test2#2345~01#012345678912#sansa test3#1234

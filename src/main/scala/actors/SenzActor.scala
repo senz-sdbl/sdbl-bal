@@ -10,7 +10,7 @@ import config.Configuration
 import crypto.RSAUtils
 import org.slf4j.LoggerFactory
 import protocols.{Senz, SenzType}
-import utils.{BalUtils, SenzParser, SenzUtils}
+import utils.{AccInquiryUtils, SenzParser, SenzUtils}
 
 object SenzActor {
 
@@ -97,14 +97,18 @@ class SenzActor extends Actor with Configuration {
       val senzMsg = data.decodeString("UTF-8")
       logger.debug("Received senzMsg : " + senzMsg)
 
-      // only handle bal here
+      // only handle acc/bal inquiry here
       // parse senz first
       val senz = SenzParser.getSenz(senzMsg)
       senz match {
         case Senz(SenzType.GET, sender, receiver, attr, signature) =>
-          // handle request via bal actor
-          val bal = BalUtils.getBal(senz)
-          context.actorOf(BalHandler.props(bal))
+          if (attr.contains("#acc") && attr.contains("#nic")) {
+            // acc inq
+            val accInq = AccInquiryUtils.getAccInq(senz)
+            context.actorOf(AccInqHandler.props(accInq))
+          } else if (attr.contains("#bal") && attr.contains("#acc")) {
+            // TODO bal inq
+          }
         case any =>
           logger.debug(s"Not support other messages $data this stats")
       }

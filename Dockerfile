@@ -23,8 +23,6 @@ ENV SWITCH_HOST dev.localhost
 ENV SWITCH_PORT 7070
 ENV EPIC_HOST dev.localhost
 ENV EPIC_PORT 8080
-ENV CASSANDRA_HOST dev.localhost
-ENV CASSANDRA_PORT 9090
 
 # working directory
 WORKDIR /app

@@ -13,21 +13,18 @@ trait Configuration {
   // config object
   val config = ConfigFactory.load()
 
-  // senz config
-  lazy val switchName = Try(config.getString("senz.switch-name")).getOrElse("mysensors")
-  lazy val clientName = Try(config.getString("senz.client-name")).getOrElse("sdblbal")
+  // senzie config
+  lazy val senzieMode = Try(config.getString("senzie.mode")).getOrElse("DEV")
+  lazy val senzieName = Try(config.getString("sensie.name")).getOrElse("sdbltrans")
 
   // server config
+  lazy val switchName = Try(config.getString("switch.name")).getOrElse("senzswitch")
   lazy val switchHost = Try(config.getString("switch.host")).getOrElse("localhost")
-  lazy val switchPort = Try(config.getInt("switch.port")).getOrElse(9090)
+  lazy val switchPort = Try(config.getInt("switch.port")).getOrElse(7070)
 
   // epic config
   lazy val epicHost = Try(config.getString("epic.host")).getOrElse("localhost")
   lazy val epicPort = Try(config.getInt("epic.port")).getOrElse(8080)
-
-  // cassandra db config
-  lazy val cassandraHost = Try(config.getString("db.cassandra.host")).getOrElse("localhost")
-  lazy val cassandraPort = Try(config.getInt("db.cassandra.port")).getOrElse(9160)
 
   // keys config
   lazy val keysDir = Try(config.getString("keys.dir")).getOrElse(".keys")

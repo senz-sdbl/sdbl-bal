@@ -14,7 +14,7 @@ object BalanceUtils {
     val agent = senz.sender
     val customer = senz.attributes.getOrElse("balacc", "")
 
-    BalInq(agent, customer)
+    BalInq("erag", "s", 3, "ewe", "D")
   }
 
   def getBalInqMsg(balInq: BalInq) = {
@@ -28,7 +28,6 @@ object BalanceUtils {
   }
 
   def generateBalInqMsg(balInq: BalInq) = {
-
     val pip = "|"
     // terminating pip for all attributes
     val rnd = new scala.util.Random
@@ -93,9 +92,7 @@ object BalanceUtils {
   def getBalInqResp(response: String) = {
     BalInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 76), response.substring(80))
     //              ESH                       rescoed                   authcode                balance
-
   }
-
 
 }
 

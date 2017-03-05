@@ -2,6 +2,7 @@ package actors
 
 import java.net.{InetAddress, InetSocketAddress}
 
+import actors.AccInqHandler.AccInq
 import actors.SenzActor.SenzMsg
 import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
@@ -9,23 +10,27 @@ import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.Configuration
 import org.slf4j.LoggerFactory
-import protocols.{BalInq, BalInqResp}
-import utils.BalanceUtils
+import utils.AccInquiryUtils
 
 import scala.concurrent.duration._
 
-case class ReqTimeout()
+object AccInqHandler {
 
-object BalHandler {
+  case class AccInqMsg(msgStream: Array[Byte])
 
-  case class TransTimeout(retry: Int)
+  case class AccInqResp(esh: String, status: String, auth: String, accs: String)
 
-  def props(accInq: BalInq): Props = Props(new BalHandler(accInq))
+  case class AccInq(agent: String, nic: String)
+
+  case class InqTimeout()
+
+  def props(accInq: AccInq): Props = Props(new AccInqHandler(accInq))
+
 }
 
-class BalHandler(accInq: BalInq) extends Actor with Configuration {
+class AccInqHandler(accInq: AccInq) extends Actor with Configuration {
 
-  import BalHandler._
+  import AccInqHandler._
   import context._
 
   def logger = LoggerFactory.getLogger(this.getClass)
@@ -38,7 +43,7 @@ class BalHandler(accInq: BalInq) extends Actor with Configuration {
   IO(Tcp) ! Connect(remoteAddress)
 
   // handle timeout in 15 seconds
-  var timeoutCancellable = system.scheduler.scheduleOnce(15 seconds, self, TransTimeout(0))
+  var timeoutCancellable = system.scheduler.scheduleOnce(15 seconds, self, InqTimeout)
 
   override def preStart() = {
     logger.debug("Start actor: " + context.self.path)
@@ -48,8 +53,8 @@ class BalHandler(accInq: BalInq) extends Actor with Configuration {
     case c@Connected(remote, local) =>
       logger.debug("TCP connected")
 
-      // transMsg from trans
-      val inqMsg = BalanceUtils.getBalInqMsg(accInq)
+      // inqMsg from
+      val inqMsg = AccInquiryUtils.getAccInqMsg(accInq)
       val msgStream = new String(inqMsg.msgStream)
 
       logger.debug("Send TransMsg " + msgStream)
@@ -65,7 +70,7 @@ class BalHandler(accInq: BalInq) extends Actor with Configuration {
           logger.error("CommandFailed[Failed to write]")
         case Received(data) =>
           val response = data.decodeString("UTF-8")
-          logger.debug("Received : " + response)
+          logger.debug("Response received : " + response)
 
           // cancel timer
           timeoutCancellable.cancel()
@@ -74,12 +79,11 @@ class BalHandler(accInq: BalInq) extends Actor with Configuration {
         case _: ConnectionClosed =>
           logger.debug("ConnectionClosed")
           context.stop(self)
-        case ReqTimeout =>
+        case InqTimeout =>
           // timeout
-          logger.error("balTimeout")
-          logger.debug("Resend balMsg " + msgStream)
+          logger.error("acc inq timeout")
 
-        // TODO resend inq
+        // TODO resend acc inq
         // connection ! Write(ByteString(balMsg.msgStream))
       }
     case CommandFailed(_: Connect) =>
@@ -89,14 +93,18 @@ class BalHandler(accInq: BalInq) extends Actor with Configuration {
 
   def handleResponse(response: String, connection: ActorRef) = {
     // parse response and get 'acc response'
-    BalanceUtils.getBalInqResp(response) match {
-      case BalInqResp(_, "00", _, bal) =>
-        logger.debug(s"acc inq done $bal")
+    AccInquiryUtils.getAccInqResp(response) match {
+      case AccInqResp(_, "00", _, data) =>
+        logger.debug(s"acc inq done $data")
 
-        // TODO send response back
-        val senz = s"DATA #acc $bal @${accInq.agent} ^sdblbal"
+        // parse acc response and find accounts
+        val accs = (for (acc <- data.split("~")) yield acc.split("#")(1)).mkString("|")
+        logger.debug(s"accs: $data")
+
+        // send response back
+        val senz = s"DATA #acc $accs @${accInq.agent} ^$senzieName"
         senzActor ! SenzMsg(senz)
-      case BalInqResp(_, status, _, _) =>
+      case AccInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)
       case resp =>
         logger.error("invalid response " + resp)
