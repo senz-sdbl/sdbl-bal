@@ -32,7 +32,7 @@ object AccInquiryUtils {
   }
 
   private def generateAccInqMassage(accInq: AccInq) = {
-    val pip = "|"
+    val pipe = "|"
 
     // terminating pip for all attributes
     val nic = accInq.nic
@@ -48,12 +48,12 @@ object AccInquiryUtils {
     // pay mode
     val requestMode = "02"
 
-    s"$transId$pip$requestMode$pip$nic"
+    s"$transId$pipe$requestMode$pipe$nic"
   }
 
   private def generateEsh = {
     // add a pip after the ESH
-    val pip = "|"
+    val pipe = "|"
     // incoming channel mode[mobile]
     val a = "SMS"
     // transaction process type[financial]
@@ -74,7 +74,7 @@ object AccInquiryUtils {
     // private data, 16 digits
     val i = "0000000000000000"
 
-    s"$a$b$c$d$e$f$g$h$i$pip"
+    s"$a$b$c$d$e$f$g$h$i$pipe"
   }
 
   private def generateHeader(msg: String) = {
