@@ -1,4 +1,4 @@
-name := "sdbl-bal"
+name := "sdbl-inq"
 
 version := "1.0"
 

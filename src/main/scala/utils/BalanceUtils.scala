@@ -3,8 +3,7 @@ package utils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import protocols.{BalInqMsg, BalInqResp}
-import protocols.{BalInq, Senz}
+import protocols.{BalInq, BalInqMsg, BalInqResp, Senz}
 
 /**
   * Created by senz on 2/13/17.
@@ -24,7 +23,6 @@ object BalanceUtils {
     val header = generateHeader(msg)
 
     BalInqMsg(header ++ msg.getBytes)
-
   }
 
   def generateBalInqMsg(balInq: BalInq) = {
@@ -48,7 +46,12 @@ object BalanceUtils {
     s"$transId$pip$payMode$pip$balAcc$pip$ePINB$pip$offset$pip$mobileNo"
   }
 
-  def generateEsh = {
+  def getBalInqResp(response: String) = {
+    // (ESH, status, authCode, balance)
+    BalInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 76), response.substring(80))
+  }
+
+  private def generateEsh = {
     val pip = "|"
     // add a pip after the ESH
     val a = "DEP"
@@ -75,23 +78,18 @@ object BalanceUtils {
     s"$a$b$c$d$e$f$g$h$i$pip"
   }
 
-  def generateHeader(msg: String) = {
+  private def generateHeader(msg: String) = {
     val hexLen = f"${Integer.toHexString(msg.getBytes.length).toUpperCase}%4s".replaceAll(" ", "0")
 
     // convert hex to bytes
     hexLen.replaceAll("[^0-9A-Fa-f]", "").sliding(2, 2).toArray.map(Integer.parseInt(_, 16).toByte)
   }
 
-  def getBalInqTime = {
+  private def getBalInqTime = {
     val now = Calendar.getInstance().getTime
     val format = new SimpleDateFormat("MMddhhmmss")
 
     format.format(now)
-  }
-
-  def getBalInqResp(response: String) = {
-    BalInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 76), response.substring(80))
-    //              ESH                       rescoed                   authcode                balance
   }
 
 }

@@ -28,7 +28,7 @@ ENV EPIC_PORT 8080
 WORKDIR /app
 
 # copy file
-ADD target/scala-2.11/sdbl-bal-assembly-1.0.jar bal.jar
+ADD target/scala-2.11/sdbl-inq-assembly-1.0.jar inq.jar
 
 # logs volume
 RUN mkdir logs
@@ -38,4 +38,4 @@ VOLUME ["/app/logs"]
 VOLUME ["/app/.keys"]
 
 # command
-ENTRYPOINT [ "java", "-jar", "/app/bal.jar" ]
+ENTRYPOINT [ "java", "-jar", "/app/inq.jar" ]
