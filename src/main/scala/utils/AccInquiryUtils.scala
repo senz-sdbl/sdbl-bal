@@ -16,16 +16,19 @@ object AccInquiryUtils {
   }
 
   def getAccInqMsg(accInq: AccInq) = {
-    val fundTranMsg = generateAccInqMassage(accInq)
     val esh = generateEsh
-    val msg = s"$esh$fundTranMsg"
+    val accInqMsg = generateAccInqMassage(accInq)
+    val msg = s"$esh$accInqMsg"
     val header = generateHeader(msg)
 
     AccInqMsg(header ++ msg.getBytes)
   }
 
   def getAccInqResp(response: String) = {
-    AccInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 80), response.substring(82))
+    val tuples = response.split("\\|")
+    val status = tuples(0).substring(tuples(0).length - 2, tuples(0).length)
+    AccInqResp(tuples(0), status, tuples(2), tuples(3))
+    //AccInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 80), response.substring(82))
   }
 
   private def generateAccInqMassage(accInq: AccInq) = {
@@ -42,33 +45,34 @@ object AccInquiryUtils {
     // random in of length 6 and time stamp of 10 digits
     val transId = s"$randomInt$getTransTime"
 
-    val requestMode = "02" // pay mode
+    // pay mode
+    val requestMode = "02"
 
     s"$transId$pip$requestMode$pip$nic"
   }
 
-  private def generateEsh() = {
-    val pip = "|"
+  private def generateEsh = {
     // add a pip after the ESH
-    val a = "SMS"
+    val pip = "|"
     // incoming channel mode[mobile]
-    val b = "01"
+    val a = "SMS"
     // transaction process type[financial]
-    val c = "06"
+    val b = "01"
     // transaction code[Cash deposit{UCSC}]
-    val d = "00000002"
+    val c = "06"
     // TID, 8 digits
-    val e = "000000000000002"
+    val d = "00000002"
     // MID, 15 digits
+    val e = "000000000000002"
+    // generation of trace no
     val rnd = new scala.util.Random
-    // generation of trace no
     val f = 100000 + rnd.nextInt(900000)
-    // generation of trace no
-    val g = getTransTime
     // date time MMDDHHMMSS
-    val h = "0001"
+    val g = getTransTime
     // application ID, 4 digits
-    val i = "0000000000000000" // private data, 16 digits
+    val h = "0001"
+    // private data, 16 digits
+    val i = "0000000000000000"
 
     s"$a$b$c$d$e$f$g$h$i$pip"
   }
@@ -76,7 +80,7 @@ object AccInquiryUtils {
   private def generateHeader(msg: String) = {
     val hexLen = f"${Integer.toHexString(msg.getBytes.length).toUpperCase}%4s".replaceAll(" ", "0")
 
-    // convert hex to bytes
+    // convert hex length to bytes
     hexLen.replaceAll("[^0-9A-Fa-f]", "").sliding(2, 2).toArray.map(Integer.parseInt(_, 16).toByte)
   }
 

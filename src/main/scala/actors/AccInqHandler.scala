@@ -109,9 +109,6 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
         logger.error("acc inq fail with stats: " + status)
 
         // TODO send error response back
-        val testAcc = "432423456923|932423456923"
-        val senz = s"DATA #acc $testAcc @${accInq.agent} ^$senzieName"
-        senzActor ! Msg(senz)
       case resp =>
         logger.error("invalid response " + resp)
     }
