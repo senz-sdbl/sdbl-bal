@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import config.Configuration
+import config.AppConf
 import crypto.RSAUtils
 import org.slf4j.LoggerFactory
 import protocols.{Senz, SenzType}
@@ -22,7 +22,7 @@ object SenzActor {
 
 }
 
-class SenzActor extends Actor with Configuration {
+class SenzActor extends Actor with AppConf {
 
   import SenzActor._
   import context._

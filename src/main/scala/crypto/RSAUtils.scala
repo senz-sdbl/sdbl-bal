@@ -5,18 +5,23 @@ import java.security._
 import java.security.spec.{PKCS8EncodedKeySpec, X509EncodedKeySpec}
 import javax.crypto.Cipher
 
-import config.Configuration
+import config.AppConf
 import sun.misc.{BASE64Decoder, BASE64Encoder}
 
 /**
- * Created by eranga on 1/11/16.
- */
-object RSAUtils extends Configuration {
+  * Created by eranga on 1/11/16.
+  */
+object RSAUtils extends AppConf {
   def initRSAKeys() = {
     // first create .keys directory
     val dir: File = new File(keysDir)
     if (!dir.exists) {
       dir.mkdir
+    }
+
+    // generate keys if not exists
+    val filePublicKey = new File(publicKeyLocation)
+    if (!filePublicKey.exists) {
       generateRSAKeyPair()
     }
   }

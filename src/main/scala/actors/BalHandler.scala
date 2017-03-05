@@ -7,7 +7,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import config.Configuration
+import config.AppConf
 import org.slf4j.LoggerFactory
 import protocols.{BalInq, BalInqResp}
 import utils.BalanceUtils
@@ -23,7 +23,7 @@ object BalHandler {
   def props(accInq: BalInq): Props = Props(new BalHandler(accInq))
 }
 
-class BalHandler(accInq: BalInq) extends Actor with Configuration {
+class BalHandler(accInq: BalInq) extends Actor with AppConf {
 
   import BalHandler._
   import context._

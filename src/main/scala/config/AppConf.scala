@@ -9,7 +9,7 @@ import scala.util.Try
   *
   * @author eranga herath(erangaeb@gmail.com)
   */
-trait Configuration {
+trait AppConf {
   // config object
   val config = ConfigFactory.load()
 

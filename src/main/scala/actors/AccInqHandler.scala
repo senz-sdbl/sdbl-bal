@@ -8,7 +8,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import config.Configuration
+import config.AppConf
 import org.slf4j.LoggerFactory
 import utils.AccInquiryUtils
 
@@ -28,7 +28,7 @@ object AccInqHandler {
 
 }
 
-class AccInqHandler(accInq: AccInq) extends Actor with Configuration {
+class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
 
   import AccInqHandler._
   import context._
