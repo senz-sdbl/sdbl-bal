@@ -94,7 +94,7 @@ class BalHandler(accInq: BalInq) extends Actor with Configuration {
         logger.debug(s"acc inq done $bal")
 
         // TODO send response back
-        val senz = s"DATA #acc $bal @${accInq.agent} ^sdblbal"
+        val senz = s"DATA #acc $bal @${accInq.agent} ^$senzieName"
         senzActor ! SenzMsg(senz)
       case BalInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)

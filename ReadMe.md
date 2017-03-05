@@ -1,7 +1,7 @@
 # Build docker images
 ```
 sbt assembly
-docker build -t senz/sdbl-bal .
+docker build -t senz/sdblinq .
 ```
 
 # Run with docker
@@ -11,9 +11,9 @@ docker run -it \
 -e SWITCH_PORT=7070 \
 -e EPIC_HOST=124.43.16.185 \
 -e EPIC_PORT=8200 \
--v /home/docker/sdbl/bal/logs:/app/logs:rw \
--v /home/docker/sdbl/bal/keys:/app/.keys:rw \
-senz/sdblbal:0.1
+-v /home/docker/sdbl/inq/logs:/app/logs:rw \
+-v /home/docker/sdbl/inq/keys:/app/.keys:rw \
+senz/sdblinq:0.1
 ```
 
 # hosts

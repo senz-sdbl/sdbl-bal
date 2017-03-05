@@ -15,7 +15,7 @@ trait Configuration {
 
   // senzie config
   lazy val senzieMode = Try(config.getString("senzie.mode")).getOrElse("DEV")
-  lazy val senzieName = Try(config.getString("sensie.name")).getOrElse("sdbltrans")
+  lazy val senzieName = Try(config.getString("sensie.name")).getOrElse("sdblinq")
 
   // server config
   lazy val switchName = Try(config.getString("switch.name")).getOrElse("senzswitch")
