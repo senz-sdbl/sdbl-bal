@@ -1,22 +1,22 @@
 package actors
 
+import java.io.{PrintWriter, StringWriter}
 import java.net.{InetAddress, InetSocketAddress}
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.SupervisorStrategy.Stop
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
 import crypto.RSAUtils
 import org.slf4j.LoggerFactory
-import protocols.{Senz, SenzType}
+import protocols.{Msg, Senz, SenzType}
 import utils.{AccInquiryUtils, SenzParser, SenzUtils}
 
 object SenzActor {
 
   case class InitSenz()
-
-  case class SenzMsg(msg: String)
 
   def props: Props = Props(new SenzActor)
 
@@ -24,7 +24,6 @@ object SenzActor {
 
 class SenzActor extends Actor with AppConf {
 
-  import SenzActor._
   import context._
 
   def logger = LoggerFactory.getLogger(this.getClass)
@@ -37,6 +36,17 @@ class SenzActor extends Actor with AppConf {
     logger.debug("Start actor: " + context.self.path)
   }
 
+  override def supervisorStrategy = OneForOneStrategy() {
+    case e: Exception =>
+      logger.error("Exception caught, [STOP ACTOR] " + e)
+      logFailure(e)
+
+      // TODO send error status back
+
+      // stop failed actors here
+      Stop
+  }
+
   override def receive: Receive = {
     case c@Connected(remote, local) =>
       logger.debug("TCP connected")
@@ -47,7 +57,12 @@ class SenzActor extends Actor with AppConf {
 
       // send reg message
       val regSenzMsg = SenzUtils.getRegistrationSenzMsg
-      connection ! Write(ByteString(regSenzMsg))
+      val senzSignature = RSAUtils.signSenz(regSenzMsg.trim.replaceAll(" ", ""))
+      val signedSenz = s"$regSenzMsg $senzSignature"
+
+      logger.info("Signed senz: " + signedSenz)
+
+      connection ! Write(ByteString(s"$signedSenz;"))
 
       // wait register
       context.become(registering(connection))
@@ -63,30 +78,32 @@ class SenzActor extends Actor with AppConf {
       val senzMsg = data.decodeString("UTF-8")
       logger.debug("Received senzMsg : " + senzMsg)
 
-      // wait for REG status
-      // parse senz first
-      val senz = SenzParser.getSenz(senzMsg)
-      senz match {
-        case Senz(SenzType.DATA, `switchName`, receiver, attr, signature) =>
-          attr.get("msg") match {
-            case Some("REG_DONE") =>
-              logger.info("Registration done")
+      if (!senzMsg.equalsIgnoreCase("TIK;")) {
+        // wait for REG status
+        // parse senz first
+        val senz = SenzParser.parseSenz(senzMsg)
+        senz match {
+          case Senz(SenzType.DATA, `switchName`, receiver, attr, signature) =>
+            attr.get("#status") match {
+              case Some("REG_DONE") =>
+                logger.info("Registration done")
 
-              // senz listening
-              context.become(listening(connection))
-            case Some("REG_ALR") =>
-              logger.info("Already registered, continue system")
+                // senz listening
+                context.become(listening(connection))
+              case Some("REG_ALR") =>
+                logger.info("Already registered, continue system")
 
-              // senz listening
-              context.become(listening(connection))
-            case Some("REG_FAIL") =>
-              logger.error("Registration fail, stop system")
-              context.stop(self)
-            case other =>
-              logger.error("UNSUPPORTED DATA message " + other)
-          }
-        case any =>
-          logger.debug(s"Not support other messages $data this stats")
+                // senz listening
+                context.become(listening(connection))
+              case Some("REG_FAIL") =>
+                logger.error("Registration fail, stop system")
+                context.stop(self)
+              case other =>
+                logger.error("UNSUPPORTED DATA message " + other)
+            }
+          case any =>
+            logger.debug(s"Not support other messages $senzMsg this stats")
+        }
       }
   }
 
@@ -97,25 +114,27 @@ class SenzActor extends Actor with AppConf {
       val senzMsg = data.decodeString("UTF-8")
       logger.debug("Received senzMsg : " + senzMsg)
 
-      // only handle acc/bal inquiry here
-      // parse senz first
-      val senz = SenzParser.getSenz(senzMsg)
-      senz match {
-        case Senz(SenzType.GET, sender, receiver, attr, signature) =>
-          if (attr.contains("#acc") && attr.contains("#nic")) {
-            // acc inq
-            val accInq = AccInquiryUtils.getAccInq(senz)
-            context.actorOf(AccInqHandler.props(accInq))
-          } else if (attr.contains("#bal") && attr.contains("#acc")) {
-            // TODO bal inq
-          }
-        case any =>
-          logger.debug(s"Not support other messages $data this stats")
+      if (!senzMsg.equalsIgnoreCase("TIK;")) {
+        // only handle trans here
+        // parse senz first
+        val senz = SenzParser.parseSenz(senzMsg)
+        senz match {
+          case Senz(SenzType.GET, sender, receiver, attr, signature) =>
+            if (attr.contains("#acc") && attr.contains("#nic")) {
+              // acc inq
+              val accInq = AccInquiryUtils.getAccInq(senz)
+              context.actorOf(AccInqHandler.props(accInq))
+            } else if (attr.contains("#bal") && attr.contains("#acc")) {
+              // TODO bal inq
+            }
+          case any =>
+            logger.debug(s"Not support message: $senzMsg")
+        }
       }
     case _: ConnectionClosed =>
       logger.debug("ConnectionClosed")
       context.stop(self)
-    case SenzMsg(msg) =>
+    case Msg(msg) =>
       // sign senz
       val senzSignature = RSAUtils.signSenz(msg.trim.replaceAll(" ", ""))
       val signedSenz = s"$msg $senzSignature"
@@ -123,7 +142,13 @@ class SenzActor extends Actor with AppConf {
       logger.info("Senz: " + msg)
       logger.info("Signed senz: " + signedSenz)
 
-      connection ! Write(ByteString(signedSenz))
+      connection ! Write(ByteString(s"$signedSenz;"))
+  }
+
+  private def logFailure(throwable: Throwable) = {
+    val writer = new StringWriter
+    throwable.printStackTrace(new PrintWriter(writer))
+    logger.error(writer.toString)
   }
 
 }

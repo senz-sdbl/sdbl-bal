@@ -12,7 +12,7 @@ object SenzUtils extends AppConf {
     if (msg == null || msg.isEmpty)
       throw new EmptySenzException("Empty Senz")
 
-    SenzParser.getSenz(msg)
+    SenzParser.parseSenz(msg)
   }
 
   def getRegistrationSenzMsg = {

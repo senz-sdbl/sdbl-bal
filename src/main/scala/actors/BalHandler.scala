@@ -2,14 +2,13 @@ package actors
 
 import java.net.{InetAddress, InetSocketAddress}
 
-import actors.SenzActor.SenzMsg
 import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
 import org.slf4j.LoggerFactory
-import protocols.{BalInq, BalInqResp}
+import protocols.{BalInq, BalInqResp, Msg}
 import utils.BalanceUtils
 
 import scala.concurrent.duration._
@@ -95,7 +94,7 @@ class BalHandler(accInq: BalInq) extends Actor with AppConf {
 
         // TODO send response back
         val senz = s"DATA #acc $bal @${accInq.agent} ^$senzieName"
-        senzActor ! SenzMsg(senz)
+        senzActor ! Msg(senz)
       case BalInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)
       case resp =>

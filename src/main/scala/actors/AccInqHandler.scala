@@ -3,13 +3,13 @@ package actors
 import java.net.{InetAddress, InetSocketAddress}
 
 import actors.AccInqHandler.AccInq
-import actors.SenzActor.SenzMsg
 import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
 import org.slf4j.LoggerFactory
+import protocols.Msg
 import utils.AccInquiryUtils
 
 import scala.concurrent.duration._
@@ -102,11 +102,16 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
         logger.debug(s"accs: $data")
 
         // send response back
-        val testAcc = "432423456923"
+        val testAcc = "432423456923|932423456923"
         val senz = s"DATA #acc $testAcc @${accInq.agent} ^$senzieName"
-        senzActor ! SenzMsg(senz)
+        senzActor ! Msg(senz)
       case AccInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)
+
+        // TODO send error response back
+        val testAcc = "432423456923|932423456923"
+        val senz = s"DATA #acc $testAcc @${accInq.agent} ^$senzieName"
+        senzActor ! Msg(senz)
       case resp =>
         logger.error("invalid response " + resp)
     }
