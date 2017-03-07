@@ -52,10 +52,10 @@ object AccInquiryUtils {
   }
 
   private def generateEsh = {
-    // add a pip after the ESH
+    // add a pipe after the ESH
     val pipe = "|"
     // incoming channel mode[mobile]
-    val a = "SMS"
+    val a = "DEP"
     // transaction process type[financial]
     val b = "01"
     // transaction code[Cash deposit{UCSC}]

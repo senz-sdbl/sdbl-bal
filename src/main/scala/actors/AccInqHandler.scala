@@ -102,13 +102,21 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
         logger.debug(s"accs: $data")
 
         // send response back
-        val testAcc = "432423456923|932423456923"
-        val senz = s"DATA #acc $testAcc @${accInq.agent} ^$senzieName"
+        val senz = s"DATA #acc $accs @${accInq.agent} ^$senzieName"
+        senzActor ! Msg(senz)
+      case AccInqResp(_, "11", _, _) =>
+        logger.error(s"No account found for id ${accInq.nic}")
+
+        // send empty response back
+        val senz = s"DATA #acc @${accInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
       case AccInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)
 
         // TODO send error response back
+        // send empty response back
+        val senz = s"DATA #acc @${accInq.agent} ^$senzieName"
+        senzActor ! Msg(senz)
       case resp =>
         logger.error("invalid response " + resp)
     }
