@@ -57,9 +57,9 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
       val inqMsg = AccInquiryUtils.getAccInqMsg(accInq)
       val msgStream = new String(inqMsg.msgStream)
 
-      logger.debug("Send TransMsg " + msgStream)
+      logger.debug("Send AccInq " + msgStream)
 
-      // send TransMsg
+      // send AccInq
       val connection = sender()
       connection ! Register(self)
       connection ! Write(ByteString(msgStream))
