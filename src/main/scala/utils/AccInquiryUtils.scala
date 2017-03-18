@@ -27,8 +27,7 @@ object AccInquiryUtils {
   def getAccInqResp(response: String) = {
     val tuples = response.split("\\|")
     val status = tuples(0).substring(tuples(0).length - 2, tuples(0).length)
-    AccInqResp(tuples(0), status, tuples(2), tuples(3))
-    //AccInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 80), response.substring(82))
+    AccInqResp("ESH", status, "AUTH", tuples(3))
   }
 
   private def generateAccInqMassage(accInq: AccInq) = {

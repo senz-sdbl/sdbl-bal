@@ -43,7 +43,7 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
   IO(Tcp) ! Connect(remoteAddress)
 
   // handle timeout in 15 seconds
-  var timeoutCancellable = system.scheduler.scheduleOnce(15 seconds, self, InqTimeout)
+  var timeoutCancellable = system.scheduler.scheduleOnce(10 seconds, self, InqTimeout())
 
   override def preStart() = {
     logger.debug("Start actor: " + context.self.path)
@@ -78,17 +78,25 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
           handleResponse(response, connection)
         case _: ConnectionClosed =>
           logger.debug("ConnectionClosed")
-          context.stop(self)
-        case InqTimeout =>
+        case InqTimeout() =>
           // timeout
           logger.error("acc inq timeout")
 
-        // TODO resend acc inq
-        // connection ! Write(ByteString(balMsg.msgStream))
+          // send error status back
+          val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+          senzActor ! Msg(senz)
+
+          context.stop(self)
       }
     case CommandFailed(_: Connect) =>
       // failed to connect
       logger.error("CommandFailed[Failed to connect]")
+
+      // send error status back
+      val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+      senzActor ! Msg(senz)
+
+      context.stop(self)
   }
 
   def handleResponse(response: String, connection: ActorRef) = {
@@ -113,16 +121,18 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
       case AccInqResp(_, status, _, _) =>
         logger.error("acc inq fail with stats: " + status)
 
-        // TODO send error response back
         // send empty response back
-        val senz = s"DATA #acc @${accInq.agent} ^$senzieName"
+        val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
       case resp =>
         logger.error("invalid response " + resp)
+
+        // send error status back
+        val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+        senzActor ! Msg(senz)
     }
 
-    // disconnect from tcp
-    connection ! Close
+    context.stop(self)
   }
 
 }
