@@ -108,12 +108,12 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
         // parse acc response and find accounts
         val ans = (for (an <- data.split("~")) yield {
           val t = an.split("#")
-          t(1).trim + "~" + t(2).trim
-        }).mkString("|")
+          t(1).trim + "|" + t(2).trim
+        }).mkString(",")
         logger.debug(s"ans: $data")
 
         // send response back
-        val senz = s"DATA #acc $ans @${accInq.agent} ^$senzieName"
+        val senz = s"DATA #acc ${ans.trim.replaceAll(" ", "_")} @${accInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
       case AccInqResp(_, "11", _, _) =>
         logger.error(s"No account found for id ${accInq.nic}")
