@@ -5,75 +5,50 @@ import java.util.Calendar
 
 import protocols.{BalInq, BalInqMsg, BalInqResp, Senz}
 
-/**
-  * Created by senz on 2/13/17.
-  */
-object BalanceUtils {
+
+object BalInqUtils {
   def getBalInq(senz: Senz): BalInq = {
     val agent = senz.sender
     val customer = senz.attributes.getOrElse("balacc", "")
 
-    BalInq("erag", "s", 3, "ewe", "D")
+    BalInq(agent, customer)
   }
 
   def getBalInqMsg(balInq: BalInq) = {
-    val fundTranMsg = generateBalInqMsg(balInq)
+    val balInqMsg = generateBalInqMsg(balInq)
     val esh = generateEsh
-    val msg = s"$esh$fundTranMsg"
+    val msg = s"$esh$balInqMsg"
     val header = generateHeader(msg)
 
     BalInqMsg(header ++ msg.getBytes)
   }
 
   def generateBalInqMsg(balInq: BalInq) = {
-    val pip = "|"
-    // terminating pip for all attributes
-    val rnd = new scala.util.Random
-    //  genaration of transaction ID
-    val randomInt = 100000 + rnd.nextInt(900000)
-    //  random num of 6 digits
+    val pip = "|" // terminating pip for all attributes
+    val rnd = new scala.util.Random //  generation of transaction ID
+    val randomInt = 100000 + rnd.nextInt(900000) //  random num of 6 digits
     val transId = s"$randomInt$getBalInqTime" // random in of length 6 and time stamp of 10 digits
-
-    val payMode = "02"
-    // pay mode
-    val ePINB = "ffffffffffffffff"
-    // ePINB, 16 digits
+    val payMode = "02" // pay mode
+    val ePINB = "ffffffffffffffff" // ePINB, 16 digits
     val offset = "000000000000" // offset, 12 digits
-
     val balAcc = balInq.customer
     val mobileNo = "0123456789" // a hard coded value for the mobile
 
     s"$transId$pip$payMode$pip$balAcc$pip$ePINB$pip$offset$pip$mobileNo"
   }
 
-  def getBalInqResp(response: String) = {
-    // (ESH, status, authCode, balance)
-    BalInqResp(response.substring(0, 70), response.substring(77, 79), response.substring(72, 76), response.substring(80))
-  }
-
   private def generateEsh = {
-    val pip = "|"
-    // add a pip after the ESH
-    val a = "DEP"
-    // incoming channel mode[mobile]
-    val b = "01"
-    // transaction process type[financial]
-    val c = "03"
-    // transaction code[Cash deposit{UCSC}]
-    val d = "00000001"
-    // TID, 8 digits
-    val e = "000000000000001"
-    // MID, 15 digits
-    val rnd = new scala.util.Random
-    // genaration of trace no
-    val f = 100000 + rnd.nextInt(900000)
-    // genaration of trace no
-    val g = getBalInqTime
-    // date time MMDDHHMMSS
-    val h = "0001"
-    // application ID, 4 digits
+    val pip = "|" // add a pip after the ESH
+    val a = "DEP" // incoming channel mode[mobile]
+    val b = "01" // transaction process type[financial]
+    val c = "03" // transaction code[Cash deposit{UCSC}]
+    val d = "00000001" // TID, 8 digits
+    val e = "000000000000001" // MID, 15 digits
+    val rnd = new scala.util.Random // generation of trace no
+    val f = 100000 + rnd.nextInt(900000) // genaration of trace no
+    val g = getBalInqTime // date time MMDDHHMMSS
+    val h = "0001" // application ID, 4 digits
     val i = "0000000000000000" // private data, 16 digits
-
 
     s"$a$b$c$d$e$f$g$h$i$pip"
   }
@@ -92,6 +67,12 @@ object BalanceUtils {
     format.format(now)
   }
 
+  def getBalInqResp(response: String) = {
+    val tuples = response.split("\\|")
+    val status = tuples(0).substring(tuples(0).length - 2, tuples(0).length)
+    BalInqResp("ESH", status, "AUTH", tuples(3))
+  }
+
 }
 
 
@@ -104,8 +85,5 @@ Response-message SMS0103000000020000000000000025928142017-02-13 16:43:45.1041456
 
       balance            01 01 000 C 000000001000      01 01 000 C 000000001000
 Response Code 00
-
-
-
 
 * */

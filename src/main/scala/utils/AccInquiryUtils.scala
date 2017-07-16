@@ -24,16 +24,10 @@ object AccInquiryUtils {
     AccInqMsg(header ++ msg.getBytes)
   }
 
-  def getAccInqResp(response: String) = {
-    val tuples = response.split("\\|")
-    val status = tuples(0).substring(tuples(0).length - 2, tuples(0).length)
-    AccInqResp("ESH", status, "AUTH", tuples(3))
-  }
-
   private def generateAccInqMassage(accInq: AccInq) = {
+    // terminating pip for all attributes
     val pipe = "|"
 
-    // terminating pip for all attributes
     val nic = accInq.nic
 
     //  generation of transaction ID
@@ -51,27 +45,17 @@ object AccInquiryUtils {
   }
 
   private def generateEsh = {
-    // add a pipe after the ESH
-    val pipe = "|"
-    // incoming channel mode[mobile]
-    val a = "DEP"
-    // transaction process type[financial]
-    val b = "01"
-    // transaction code[Cash deposit{UCSC}]
-    val c = "06"
-    // TID, 8 digits
-    val d = "00000002"
-    // MID, 15 digits
-    val e = "000000000000002"
-    // generation of trace no
+    val pipe = "|" // add a pipe after the ESH
+    val a = "DEP" // incoming channel mode[mobile]
+    val b = "01" // transaction process type[financial]
+    val c = "06" // transaction code[Cash deposit{UCSC}]
+    val d = "00000002" // TID, 8 digits
+    val e = "000000000000002" // MID, 15 digits
     val rnd = new scala.util.Random
-    val f = 100000 + rnd.nextInt(900000)
-    // date time MMDDHHMMSS
-    val g = getTransTime
-    // application ID, 4 digits
-    val h = "0001"
-    // private data, 16 digits
-    val i = "0000000000000000"
+    val f = 100000 + rnd.nextInt(900000) // generation of trace no
+    val g = getTransTime // date time MMDDHHMMSS
+    val h = "0001" // application ID, 4 digits
+    val i = "0000000000000000" // private data, 16 digits
 
     s"$a$b$c$d$e$f$g$h$i$pipe"
   }
@@ -88,6 +72,12 @@ object AccInquiryUtils {
     val format = new SimpleDateFormat("MMddhhmmss")
 
     format.format(now)
+  }
+
+  def getAccInqResp(response: String) = {
+    val tuples = response.split("\\|")
+    val status = tuples(0).substring(tuples(0).length - 2, tuples(0).length)
+    AccInqResp("ESH", status, "AUTH", tuples(3))
   }
 
 }

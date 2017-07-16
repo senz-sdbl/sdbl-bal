@@ -9,22 +9,20 @@ import akka.util.ByteString
 import config.AppConf
 import org.slf4j.LoggerFactory
 import protocols.{BalInq, BalInqResp, Msg}
-import utils.BalanceUtils
+import utils.BalInqUtils
 
 import scala.concurrent.duration._
 
-case class ReqTimeout()
+object BalInqHandler {
 
-object BalHandler {
+  case class BalInqTimeout()
 
-  case class TransTimeout(retry: Int)
-
-  def props(accInq: BalInq): Props = Props(new BalHandler(accInq))
+  def props(accInq: BalInq): Props = Props(new BalInqHandler(accInq))
 }
 
-class BalHandler(accInq: BalInq) extends Actor with AppConf {
+class BalInqHandler(accInq: BalInq) extends Actor with AppConf {
 
-  import BalHandler._
+  import BalInqHandler._
   import context._
 
   def logger = LoggerFactory.getLogger(this.getClass)
@@ -37,7 +35,7 @@ class BalHandler(accInq: BalInq) extends Actor with AppConf {
   IO(Tcp) ! Connect(remoteAddress)
 
   // handle timeout in 15 seconds
-  var timeoutCancellable = system.scheduler.scheduleOnce(15 seconds, self, TransTimeout(0))
+  var timeoutCancellable = system.scheduler.scheduleOnce(30.seconds, self, BalInqTimeout())
 
   override def preStart() = {
     logger.debug("Start actor: " + context.self.path)
@@ -48,7 +46,7 @@ class BalHandler(accInq: BalInq) extends Actor with AppConf {
       logger.debug("TCP connected")
 
       // transMsg from trans
-      val inqMsg = BalanceUtils.getBalInqMsg(accInq)
+      val inqMsg = BalInqUtils.getBalInqMsg(accInq)
       val msgStream = new String(inqMsg.msgStream)
 
       logger.debug("Send TransMsg " + msgStream)
@@ -71,38 +69,69 @@ class BalHandler(accInq: BalInq) extends Actor with AppConf {
 
           handleResponse(response, connection)
         case _: ConnectionClosed =>
-          logger.debug("ConnectionClosed")
-          context.stop(self)
-        case ReqTimeout =>
-          // timeout
-          logger.error("balTimeout")
-          logger.debug("Resend balMsg " + msgStream)
+          logger.error("ConnectionClosed before complete the trans")
 
-        // TODO resend inq
-        // connection ! Write(ByteString(balMsg.msgStream))
+          // cancel timer
+          timeoutCancellable.cancel()
+
+          // send error status back
+          val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+          senzActor ! Msg(senz)
+
+          // stop from here
+          context.stop(self)
+        case BalInqTimeout() =>
+          // timeout
+          logger.error("bal inq timeout")
+
+          // send error status back
+          val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+          senzActor ! Msg(senz)
+
+          // stop from here
+          context.stop(self)
       }
     case CommandFailed(_: Connect) =>
       // failed to connect
       logger.error("CommandFailed[Failed to connect]")
+
+      // cancel timer
+      timeoutCancellable.cancel()
+
+      // send error status back
+      val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+      senzActor ! Msg(senz)
+
+      // stop from here
+      context.stop(self)
   }
 
   def handleResponse(response: String, connection: ActorRef) = {
     // parse response and get 'acc response'
-    BalanceUtils.getBalInqResp(response) match {
+    BalInqUtils.getBalInqResp(response) match {
       case BalInqResp(_, "00", _, bal) =>
-        logger.debug(s"acc inq done $bal")
+        logger.info(s"bal inq success with $bal")
 
-        // TODO send response back
-        val senz = s"DATA #acc $bal @${accInq.agent} ^$senzieName"
+        // send response back with actual balance
+        val balance = bal.substring(8, 20)
+        val senz = s"DATA #acc $balance @${accInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
       case BalInqResp(_, status, _, _) =>
-        logger.error("acc inq fail with stats: " + status)
+        logger.error("bal inq fail with stats: " + status)
+
+        // send error response back
+        val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+        senzActor ! Msg(senz)
       case resp =>
         logger.error("invalid response " + resp)
+
+        // send error response back
+        val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+        senzActor ! Msg(senz)
     }
 
-    // disconnect from tcp
-    connection ! Close
+    // stop from here
+    context.stop(self)
   }
 
 }

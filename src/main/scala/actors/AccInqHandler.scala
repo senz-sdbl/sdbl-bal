@@ -22,7 +22,7 @@ object AccInqHandler {
 
   case class AccInq(agent: String, nic: String)
 
-  case class InqTimeout()
+  case class AccInqTimeout()
 
   def props(accInq: AccInq): Props = Props(new AccInqHandler(accInq))
 
@@ -43,7 +43,7 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
   IO(Tcp) ! Connect(remoteAddress)
 
   // handle timeout in 15 seconds
-  var timeoutCancellable = system.scheduler.scheduleOnce(10 seconds, self, InqTimeout())
+  var timeoutCancellable = system.scheduler.scheduleOnce(30.seconds, self, AccInqTimeout())
 
   override def preStart() = {
     logger.debug("Start actor: " + context.self.path)
@@ -77,8 +77,18 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
 
           handleResponse(response, connection)
         case _: ConnectionClosed =>
-          logger.debug("ConnectionClosed")
-        case InqTimeout() =>
+          logger.error("ConnectionClosed before complete the trans")
+
+          // cancel timer
+          timeoutCancellable.cancel()
+
+          // send error status back
+          val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+          senzActor ! Msg(senz)
+
+          // stop from here
+          context.stop(self)
+        case AccInqTimeout() =>
           // timeout
           logger.error("acc inq timeout")
 
@@ -86,16 +96,21 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
           val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
           senzActor ! Msg(senz)
 
+          // stop from here
           context.stop(self)
       }
     case CommandFailed(_: Connect) =>
       // failed to connect
       logger.error("CommandFailed[Failed to connect]")
 
+      // cancel timer
+      timeoutCancellable.cancel()
+
       // send error status back
       val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
       senzActor ! Msg(senz)
 
+      // stop from here
       context.stop(self)
   }
 
