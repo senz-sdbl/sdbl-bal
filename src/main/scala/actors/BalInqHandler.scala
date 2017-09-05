@@ -2,24 +2,32 @@ package actors
 
 import java.net.{InetAddress, InetSocketAddress}
 
+import actors.BalInqHandler.BalInq
 import akka.actor.{Actor, ActorRef, Props}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
-import protocols.{BalInq, BalInqResp, Msg}
+import protocols.Msg
 import utils.{BalInqUtils, SenzLogger}
 
 import scala.concurrent.duration._
 
 object BalInqHandler {
 
+  case class BalInq(agent: String, account: String)
+
+  case class BalInqMsg(msgStream: Array[Byte])
+
+  case class BalInqResp(esh: String, status: String, authCode: String, rst: String)
+
   case class BalInqTimeout()
 
   def props(accInq: BalInq): Props = Props(new BalInqHandler(accInq))
+
 }
 
-class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
+class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
 
   import BalInqHandler._
   import context._
@@ -43,7 +51,7 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
       logger.debug("TCP connected")
 
       // transMsg from trans
-      val inqMsg = BalInqUtils.getBalInqMsg(accInq)
+      val inqMsg = BalInqUtils.getBalInqMsg(balInq)
       val msgStream = new String(inqMsg.msgStream)
 
       logger.debug("Send TransMsg " + msgStream)
@@ -72,7 +80,7 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
           timeoutCancellable.cancel()
 
           // send error status back
-          val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+          val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
           senzActor ! Msg(senz)
 
           // stop from here
@@ -82,7 +90,7 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
           logger.error("bal inq timeout")
 
           // send error status back
-          val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+          val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
           senzActor ! Msg(senz)
 
           // stop from here
@@ -96,7 +104,7 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
       timeoutCancellable.cancel()
 
       // send error status back
-      val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+      val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
       senzActor ! Msg(senz)
 
       // stop from here
@@ -111,19 +119,19 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
 
         // send response back with actual balance
         val balance = bal.substring(8, 20)
-        val senz = s"DATA #acc $balance @${accInq.agent} ^$senzieName"
+        val senz = s"DATA #bal $balance @${balInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
       case BalInqResp(_, status, _, _) =>
         logger.error("bal inq fail with stats: " + status)
 
         // send error response back
-        val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+        val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
       case resp =>
         logger.error("invalid response " + resp)
 
         // send error response back
-        val senz = s"DATA #status ERROR @${accInq.agent} ^$senzieName"
+        val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
         senzActor ! Msg(senz)
     }
 

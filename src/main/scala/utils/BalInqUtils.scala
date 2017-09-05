@@ -3,15 +3,15 @@ package utils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import protocols.{BalInq, BalInqMsg, BalInqResp, Senz}
+import actors.BalInqHandler.{BalInq, BalInqMsg, BalInqResp}
+import protocols.Senz
 
 
 object BalInqUtils {
   def getBalInq(senz: Senz): BalInq = {
     val agent = senz.sender
-    val customer = senz.attributes.getOrElse("#acc", "")
-
-    BalInq(agent, customer)
+    val acc = senz.attributes.getOrElse("#acc", "")
+    BalInq(agent, acc)
   }
 
   def getBalInqMsg(balInq: BalInq) = {
@@ -31,7 +31,7 @@ object BalInqUtils {
     val payMode = "02" // pay mode
     val ePINB = "ffffffffffffffff" // ePINB, 16 digits
     val offset = "000000000000" // offset, 12 digits
-    val balAcc = balInq.customer
+    val balAcc = balInq.account
     val mobileNo = "0123456789" // a hard coded value for the mobile
 
     s"$transId$pip$payMode$pip$balAcc$pip$ePINB$pip$offset$pip$mobileNo"
