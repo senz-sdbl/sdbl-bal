@@ -42,15 +42,15 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
   val remoteAddress = new InetSocketAddress(InetAddress.getByName(epicHost), epicPort)
   IO(Tcp) ! Connect(remoteAddress)
 
-  // handle timeout in 15 seconds
+  // handle timeout in 30 seconds
   var timeoutCancellable = system.scheduler.scheduleOnce(30.seconds, self, AccInqTimeout())
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     logger.debug("Start actor: " + context.self.path)
   }
 
   override def receive: Receive = {
-    case c@Connected(remote, local) =>
+    case Connected(_, _) =>
       logger.debug("TCP connected")
 
       // inqMsg from
@@ -66,7 +66,7 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
 
       // handler response
       context become {
-        case CommandFailed(w: Write) =>
+        case CommandFailed(_: Write) =>
           logger.error("CommandFailed[Failed to write]")
         case Received(data) =>
           val response = data.decodeString("UTF-8")
@@ -114,7 +114,7 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
       context.stop(self)
   }
 
-  def handleResponse(response: String, connection: ActorRef) = {
+  def handleResponse(response: String, connection: ActorRef): Unit = {
     // parse response and get 'acc response'
     AccInquiryUtils.getAccInqResp(response) match {
       case AccInqResp(_, "00", _, data) =>

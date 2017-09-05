@@ -9,7 +9,7 @@ import protocols.{BalInq, BalInqMsg, BalInqResp, Senz}
 object BalInqUtils {
   def getBalInq(senz: Senz): BalInq = {
     val agent = senz.sender
-    val customer = senz.attributes.getOrElse("balacc", "")
+    val customer = senz.attributes.getOrElse("#acc", "")
 
     BalInq(agent, customer)
   }

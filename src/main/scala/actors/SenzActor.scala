@@ -1,6 +1,5 @@
 package actors
 
-import java.io.{PrintWriter, StringWriter}
 import java.net.{InetAddress, InetSocketAddress}
 
 import akka.actor.SupervisorStrategy.Stop
@@ -10,9 +9,8 @@ import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
 import crypto.RSAUtils
-import org.slf4j.LoggerFactory
 import protocols.{Msg, Senz, SenzType}
-import utils.{AccInquiryUtils, SenzParser, SenzUtils}
+import utils.{AccInquiryUtils, SenzLogger, SenzParser, SenzUtils}
 
 object SenzActor {
 
@@ -22,24 +20,22 @@ object SenzActor {
 
 }
 
-class SenzActor extends Actor with AppConf {
+class SenzActor extends Actor with AppConf with SenzLogger {
 
   import context._
-
-  def logger = LoggerFactory.getLogger(this.getClass)
 
   // connect to senz tcp
   val remoteAddress = new InetSocketAddress(InetAddress.getByName(switchHost), switchPort)
   IO(Tcp) ! Connect(remoteAddress)
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     logger.debug("Start actor: " + context.self.path)
   }
 
-  override def supervisorStrategy = OneForOneStrategy() {
+  override def supervisorStrategy: OneForOneStrategy = OneForOneStrategy() {
     case e: Exception =>
       logger.error("Exception caught, [STOP ACTOR] " + e)
-      logFailure(e)
+      logError(e)
 
       // TODO send error status back
 
@@ -48,7 +44,7 @@ class SenzActor extends Actor with AppConf {
   }
 
   override def receive: Receive = {
-    case c@Connected(remote, local) =>
+    case Connected(_, _) =>
       logger.debug("TCP connected")
 
       // tcp conn
@@ -72,7 +68,7 @@ class SenzActor extends Actor with AppConf {
   }
 
   def registering(connection: ActorRef): Receive = {
-    case CommandFailed(w: Write) =>
+    case CommandFailed(_: Write) =>
       logger.error("CommandFailed[Failed to write]")
     case Received(data) =>
       val senzMsg = data.decodeString("UTF-8")
@@ -83,7 +79,7 @@ class SenzActor extends Actor with AppConf {
         // parse senz first
         val senz = SenzParser.parseSenz(senzMsg)
         senz match {
-          case Senz(SenzType.DATA, `switchName`, receiver, attr, signature) =>
+          case Senz(SenzType.DATA, `switchName`, _, attr, _) =>
             attr.get("#status") match {
               case Some("REG_DONE") =>
                 logger.info("Registration done")
@@ -101,14 +97,14 @@ class SenzActor extends Actor with AppConf {
               case other =>
                 logger.error("UNSUPPORTED DATA message " + other)
             }
-          case any =>
+          case _ =>
             logger.debug(s"Not support other messages $senzMsg this stats")
         }
       }
   }
 
   def listening(connection: ActorRef): Receive = {
-    case CommandFailed(w: Write) =>
+    case CommandFailed(_: Write) =>
       logger.error("CommandFailed[Failed to write]")
     case Received(data) =>
       val senzMsg = data.decodeString("UTF-8")
@@ -119,7 +115,7 @@ class SenzActor extends Actor with AppConf {
         // parse senz first
         val senz = SenzParser.parseSenz(senzMsg)
         senz match {
-          case Senz(SenzType.GET, sender, receiver, attr, signature) =>
+          case Senz(SenzType.GET, _, _, attr, _) =>
             if (attr.contains("#acc") && attr.contains("#nic")) {
               // acc inq
               val accInq = AccInquiryUtils.getAccInq(senz)
@@ -127,7 +123,7 @@ class SenzActor extends Actor with AppConf {
             } else if (attr.contains("#bal") && attr.contains("#acc")) {
               // TODO bal inq
             }
-          case any =>
+          case _ =>
             logger.debug(s"Not support message: $senzMsg")
         }
       }
@@ -143,12 +139,6 @@ class SenzActor extends Actor with AppConf {
       logger.info("Signed senz: " + signedSenz)
 
       connection ! Write(ByteString(s"$signedSenz;"))
-  }
-
-  private def logFailure(throwable: Throwable) = {
-    val writer = new StringWriter
-    throwable.printStackTrace(new PrintWriter(writer))
-    logger.error(writer.toString)
   }
 
 }

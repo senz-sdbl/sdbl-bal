@@ -7,9 +7,8 @@ import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
-import org.slf4j.LoggerFactory
 import protocols.{BalInq, BalInqResp, Msg}
-import utils.BalInqUtils
+import utils.{BalInqUtils, SenzLogger}
 
 import scala.concurrent.duration._
 
@@ -20,12 +19,10 @@ object BalInqHandler {
   def props(accInq: BalInq): Props = Props(new BalInqHandler(accInq))
 }
 
-class BalInqHandler(accInq: BalInq) extends Actor with AppConf {
+class BalInqHandler(accInq: BalInq) extends Actor with AppConf with SenzLogger {
 
   import BalInqHandler._
   import context._
-
-  def logger = LoggerFactory.getLogger(this.getClass)
 
   // we need senz sender to send reply back
   val senzActor = context.actorSelection("/user/SenzActor")
@@ -34,15 +31,15 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf {
   val remoteAddress = new InetSocketAddress(InetAddress.getByName(epicHost), epicPort)
   IO(Tcp) ! Connect(remoteAddress)
 
-  // handle timeout in 15 seconds
+  // handle timeout in 30 seconds
   var timeoutCancellable = system.scheduler.scheduleOnce(30.seconds, self, BalInqTimeout())
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     logger.debug("Start actor: " + context.self.path)
   }
 
   override def receive: Receive = {
-    case c@Connected(remote, local) =>
+    case Connected(_, _) =>
       logger.debug("TCP connected")
 
       // transMsg from trans
@@ -58,7 +55,7 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf {
 
       // handler response
       context become {
-        case CommandFailed(w: Write) =>
+        case CommandFailed(_: Write) =>
           logger.error("CommandFailed[Failed to write]")
         case Received(data) =>
           val response = data.decodeString("UTF-8")
@@ -106,7 +103,7 @@ class BalInqHandler(accInq: BalInq) extends Actor with AppConf {
       context.stop(self)
   }
 
-  def handleResponse(response: String, connection: ActorRef) = {
+  def handleResponse(response: String, connection: ActorRef): Unit = {
     // parse response and get 'acc response'
     BalInqUtils.getBalInqResp(response) match {
       case BalInqResp(_, "00", _, bal) =>

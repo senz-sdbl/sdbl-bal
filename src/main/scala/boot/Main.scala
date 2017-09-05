@@ -10,16 +10,15 @@ import utils.SenzFactory
   * Created by eranga on 1/9/16.
   */
 object Main extends App {
-  // setup logging
-  SenzFactory.setupLogging()
 
+  // setup logging
   // setup keys
+  // generate key pair if not already generated
+  SenzFactory.setupLogging()
   SenzFactory.setupKeys()
+  RSAUtils.initRSAKeys()
 
   implicit val system = ActorSystem("senz")
-
-  // first generate key pair if not already generated
-  RSAUtils.initRSAKeys()
 
   // start senz actor
   val senzActor = system.actorOf(SenzActor.props, name = "SenzActor")
