@@ -50,13 +50,13 @@ class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
     case Connected(_, _) =>
       logger.debug("TCP connected")
 
-      // transMsg from trans
+      // InqMsg
       val inqMsg = BalInqUtils.getBalInqMsg(balInq)
       val msgStream = new String(inqMsg.msgStream)
 
-      logger.debug("Send TransMsg " + msgStream)
+      logger.debug("Send BalInq message " + msgStream)
 
-      // send TransMsg
+      // send InqMsg
       val connection = sender()
       connection ! Register(self)
       connection ! Write(ByteString(msgStream))
@@ -74,7 +74,7 @@ class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
 
           handleResponse(response, connection)
         case _: ConnectionClosed =>
-          logger.error("ConnectionClosed before complete the trans")
+          logger.error("ConnectionClosed before complete the inq")
 
           // cancel timer
           timeoutCancellable.cancel()
