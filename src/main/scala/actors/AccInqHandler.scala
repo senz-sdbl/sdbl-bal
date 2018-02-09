@@ -57,7 +57,7 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
       val inqMsg = AccInquiryUtils.getAccInqMsg(accInq)
       val msgStream = new String(inqMsg.msgStream)
 
-      logger.debug("Send AccInq " + msgStream)
+      logger.debug("Send AccInq: " + msgStream)
 
       // send AccInq
       val connection = sender()
@@ -70,7 +70,7 @@ class AccInqHandler(accInq: AccInq) extends Actor with AppConf {
           logger.error("CommandFailed[Failed to write]")
         case Received(data) =>
           val response = data.decodeString("UTF-8")
-          logger.debug("Response received : " + response)
+          logger.debug("Response received: " + response)
 
           // cancel timer
           timeoutCancellable.cancel()

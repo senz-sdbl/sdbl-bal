@@ -54,7 +54,7 @@ class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
       val inqMsg = BalInqUtils.getBalInqMsg(balInq)
       val msgStream = new String(inqMsg.msgStream)
 
-      logger.debug("Send BalInq message " + msgStream)
+      logger.debug("Send BalInq: " + msgStream)
 
       // send InqMsg
       val connection = sender()
@@ -67,7 +67,7 @@ class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
           logger.error("CommandFailed[Failed to write]")
         case Received(data) =>
           val response = data.decodeString("UTF-8")
-          logger.debug("Received : " + response)
+          logger.debug("Response received: " + response)
 
           // cancel timer
           timeoutCancellable.cancel()
