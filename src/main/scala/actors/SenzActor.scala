@@ -9,8 +9,10 @@ import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
 import crypto.RSAUtils
+import akka.actor._
 import protocols.{Msg, Senz, SenzType}
 import utils._
+
 
 object SenzActor {
 
@@ -123,7 +125,7 @@ class SenzActor extends Actor with AppConf with SenzLogger {
             } else if (attr.contains("#bal") && attr.contains("#acc")) {
               // bal inq
               val balInq = BalInqUtils.getBalInq(senz)
-              context.actorOf(BalInqHandler.props(balInq))
+              context.actorOf(BalInqHandler.props(balInq)) ! balInq
             }
           case _ =>
             logger.debug(s"Not support message: $senzMsg")

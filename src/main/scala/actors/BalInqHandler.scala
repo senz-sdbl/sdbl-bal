@@ -8,6 +8,7 @@ import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import config.AppConf
+
 import protocols.Msg
 import utils.{BalInqUtils, SenzLogger}
 
@@ -47,6 +48,19 @@ class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
   }
 
   override def receive: Receive = {
+    case BalInq(agent, account) =>
+      logger.debug("balance inquery")
+
+      // todo call http endpoint
+
+      // todo parse json
+
+      // get balance
+      val bal = 340
+
+      // return to sender
+      val senz = s"DATA #bal $bal @${balInq.agent} ^$senzieName"
+      senzActor ! Msg(senz)
     case Connected(_, _) =>
       logger.debug("TCP connected")
 
