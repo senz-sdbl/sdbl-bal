@@ -85,39 +85,3 @@ class BalInqHandler extends Actor with AppConf with SenzLogger {
     }
   }
 }
-
-//object M extends App {
-//  val response =
-//    """
-//      |{"CustomerDetails":[{"CIF":"","NewNICNo":"","SuccessMsg":"No Records Found","ShortName":"","City":"","Gender":"","CustomerType":"","OldNICNo":"","Nationality":"","DOB":"","BalanceDetails":[{"CurrentBalance":"3444","MemoBalance":"","SuccessMsg":"No Records Found","AccountNumber":""}],"FullOrDispName":"","BranchCode":""}]}
-//    """.stripMargin
-//
-//  // parse json
-//  //  val bal = for {
-//  //    Some(map: Map[String, List[Any]]) <- JSON.parseFull(response)
-//  //    Some(cl: List[Any]) <- map.get("CustomerDetails")
-//  //    Some(c: Map[String, Any]) <- map.get("CustomerDetails")
-//  //    Some(bl: List[Any]) <- c.get("BalanceDetails")
-//  //    Some(b: Map[String, Any]) <- bl.headOption
-//  //  } yield {
-//  //    b("CurrentBalance").asInstanceOf[String]
-//  //  }
-//
-//  val bal = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
-//    .map(
-//      c =>
-//        c("CustomerDetails")
-//          .head.asInstanceOf[Map[String, Any]]("BalanceDetails").asInstanceOf[List[Map[String, Any]]]
-//          .head("CurrentBalance")
-//    )
-//
-//
-//  //    .map(
-//  //      l => l.headOption.asInstanceOf[Some[Map[String, List[Any]]]]
-//  //        .get("BalanceDetails")
-//  //        .map(m => m.headOption.asInstanceOf[Map[String, Any]])
-//  //        .get("CurrentBalance")
-//  //    )
-//
-//  println(bal)
-//}
