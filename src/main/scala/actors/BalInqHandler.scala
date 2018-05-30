@@ -48,17 +48,16 @@ class BalInqHandler extends Actor with AppConf with SenzLogger {
       logger.debug(s"balance inquery $agent $account")
 
       // call http endpoint
+      // remove trailing 0 before acc inq
       val f = doInq(account.replaceAll("^0*", ""))
       Try(Await.result(f, timeout.duration)) match {
         case Success(response) =>
           logger.info(s"inq response: $response")
 
           val bal = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
-            .map(
-              c => c("CustomerDetails")
-                  .head.asInstanceOf[Map[String, Any]]("BalanceDetails").asInstanceOf[List[Map[String, Any]]]
-                  .head("CurrentBalance")
-            )
+            .map(_ ("CustomerDetails")
+              .head.asInstanceOf[Map[String, Any]]("BalanceDetails").asInstanceOf[List[Map[String, Any]]]
+              .head("CurrentBalance"))
           logger.info(s"balance $bal")
 
           // return to sender
