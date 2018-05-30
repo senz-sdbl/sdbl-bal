@@ -125,7 +125,7 @@ class SenzActor extends Actor with AppConf with SenzLogger {
             } else if (attr.contains("#bal") && attr.contains("#acc")) {
               // bal inq
               val balInq = BalInqUtils.getBalInq(senz)
-              context.actorOf(BalInqHandler.props(balInq)) ! balInq
+              context.actorOf(BalInqHandler.props) ! balInq
             }
           case _ =>
             logger.debug(s"Not support message: $senzMsg")

@@ -15,7 +15,8 @@ libraryDependencies ++= {
     "com.datastax.cassandra"  % "cassandra-driver-core"     % cassandraVersion,
     "org.slf4j"               % "slf4j-api"                 % "1.7.5",
     "ch.qos.logback"          % "logback-classic"           % "1.0.9",
-    "org.scalatest"           % "scalatest_2.11"            % "2.2.1"               % "test"
+    "org.scalatest"           % "scalatest_2.11"            % "2.2.1"               % "test",
+    "org.scala-lang.modules" %% "scala-parser-combinators"  % "1.0.2"
   )
 }
 

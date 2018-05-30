@@ -1,18 +1,17 @@
 package actors
 
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.URL
 
-import actors.BalInqHandler.BalInq
-import akka.actor.{Actor, ActorRef, Props}
-import akka.io.Tcp._
-import akka.io.{IO, Tcp}
-import akka.util.ByteString
+import akka.actor.{Actor, Props}
+import akka.util.Timeout
 import config.AppConf
-
 import protocols.Msg
-import utils.{BalInqUtils, SenzLogger}
+import utils.SenzLogger
 
-import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.io.Source
+import scala.util.parsing.json.JSON
+import scala.util.{Success, Try}
 
 object BalInqHandler {
 
@@ -24,24 +23,21 @@ object BalInqHandler {
 
   case class BalInqTimeout()
 
-  def props(accInq: BalInq): Props = Props(new BalInqHandler(accInq))
+  def props: Props = Props(new BalInqHandler)
 
 }
 
-class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
+class BalInqHandler extends Actor with AppConf with SenzLogger {
 
   import BalInqHandler._
-  import context._
+
+  import scala.concurrent.ExecutionContext.Implicits._
+  import scala.concurrent.duration._
+
+  implicit val timeout = Timeout(20.seconds)
 
   // we need senz sender to send reply back
   val senzActor = context.actorSelection("/user/SenzActor")
-
-  // connect to epic tcp end
-  val remoteAddress = new InetSocketAddress(InetAddress.getByName(epicHost), epicPort)
-  IO(Tcp) ! Connect(remoteAddress)
-
-  // handle timeout in 30 seconds
-  var timeoutCancellable = system.scheduler.scheduleOnce(30.seconds, self, BalInqTimeout())
 
   override def preStart(): Unit = {
     logger.debug("Start actor: " + context.self.path)
@@ -49,108 +45,79 @@ class BalInqHandler(balInq: BalInq) extends Actor with AppConf with SenzLogger {
 
   override def receive: Receive = {
     case BalInq(agent, account) =>
-      logger.debug("balance inquery")
+      logger.debug(s"balance inquery $agent $account")
 
-      // todo call http endpoint
+      // call http endpoint
+      val f = doInq(account.replaceAll("^0*", ""))
+      Try(Await.result(f, timeout.duration)) match {
+        case Success(response) =>
+          logger.info(s"inq response: $response")
 
-      // todo parse json
+          val bal = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
+            .map(
+              c => c("CustomerDetails")
+                  .head.asInstanceOf[Map[String, Any]]("BalanceDetails").asInstanceOf[List[Map[String, Any]]]
+                  .head("CurrentBalance")
+            )
+          logger.info(s"balance $bal")
 
-      // get balance
-      val bal = 340
-
-      // return to sender
-      val senz = s"DATA #bal $bal @${balInq.agent} ^$senzieName"
-      senzActor ! Msg(senz)
-    case Connected(_, _) =>
-      logger.debug("TCP connected")
-
-      // InqMsg
-      val inqMsg = BalInqUtils.getBalInqMsg(balInq)
-      val msgStream = new String(inqMsg.msgStream)
-
-      logger.debug("Send BalInq: " + msgStream)
-
-      // send InqMsg
-      val connection = sender()
-      connection ! Register(self)
-      connection ! Write(ByteString(msgStream))
-
-      // handler response
-      context become {
-        case CommandFailed(_: Write) =>
-          logger.error("CommandFailed[Failed to write]")
-        case Received(data) =>
-          val response = data.decodeString("UTF-8")
-          logger.debug("Response received: " + response)
-
-          // cancel timer
-          timeoutCancellable.cancel()
-
-          handleResponse(response, connection)
-        case _: ConnectionClosed =>
-          logger.error("ConnectionClosed before complete the inq")
-
-          // cancel timer
-          timeoutCancellable.cancel()
-
-          // send error status back
-          val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
+          // return to sender
+          val senz = s"DATA #bal ${bal.getOrElse("")} @$agent ^$senzieName"
+          senzActor ! Msg(senz)
+        case e =>
+          logger.info(s"fail to complete acc inq $e")
+          val senz = s"DATA #status ERROR @$agent ^$senzieName"
           senzActor ! Msg(senz)
 
-          // stop from here
-          context.stop(self)
-        case BalInqTimeout() =>
-          // timeout
-          logger.error("bal inq timeout")
-
-          // send error status back
-          val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
-          senzActor ! Msg(senz)
-
-          // stop from here
           context.stop(self)
       }
-    case CommandFailed(_: Connect) =>
-      // failed to connect
-      logger.error("CommandFailed[Failed to connect]")
-
-      // cancel timer
-      timeoutCancellable.cancel()
-
-      // send error status back
-      val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
-      senzActor ! Msg(senz)
-
-      // stop from here
-      context.stop(self)
   }
 
-  def handleResponse(response: String, connection: ActorRef): Unit = {
-    // parse response and get 'acc response'
-    BalInqUtils.getBalInqResp(response) match {
-      case BalInqResp(_, "00", _, bal) =>
-        logger.info(s"bal inq success with $bal")
+  private def doInq(acc: String): Future[String] = {
+    val url = new URL(s"http://10.100.31.43:8080/dailyCollection/DailyCollectionAccountDetails?ACCOUNTNUMBER=$acc")
+    val conn = url.openConnection.asInstanceOf[java.net.HttpURLConnection]
+    conn.setRequestMethod("GET")
+    conn.setDoOutput(true)
 
-        // send response back with actual balance
-        val balance = bal.substring(8, 20)
-        val senz = s"DATA #bal $balance @${balInq.agent} ^$senzieName"
-        senzActor ! Msg(senz)
-      case BalInqResp(_, status, _, _) =>
-        logger.error("bal inq fail with stats: " + status)
-
-        // send error response back
-        val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
-        senzActor ! Msg(senz)
-      case resp =>
-        logger.error("invalid response " + resp)
-
-        // send error response back
-        val senz = s"DATA #status ERROR @${balInq.agent} ^$senzieName"
-        senzActor ! Msg(senz)
+    // read response to string
+    Future {
+      Source.fromInputStream(conn.getInputStream).mkString
     }
-
-    // stop from here
-    context.stop(self)
   }
-
 }
+
+//object M extends App {
+//  val response =
+//    """
+//      |{"CustomerDetails":[{"CIF":"","NewNICNo":"","SuccessMsg":"No Records Found","ShortName":"","City":"","Gender":"","CustomerType":"","OldNICNo":"","Nationality":"","DOB":"","BalanceDetails":[{"CurrentBalance":"3444","MemoBalance":"","SuccessMsg":"No Records Found","AccountNumber":""}],"FullOrDispName":"","BranchCode":""}]}
+//    """.stripMargin
+//
+//  // parse json
+//  //  val bal = for {
+//  //    Some(map: Map[String, List[Any]]) <- JSON.parseFull(response)
+//  //    Some(cl: List[Any]) <- map.get("CustomerDetails")
+//  //    Some(c: Map[String, Any]) <- map.get("CustomerDetails")
+//  //    Some(bl: List[Any]) <- c.get("BalanceDetails")
+//  //    Some(b: Map[String, Any]) <- bl.headOption
+//  //  } yield {
+//  //    b("CurrentBalance").asInstanceOf[String]
+//  //  }
+//
+//  val bal = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
+//    .map(
+//      c =>
+//        c("CustomerDetails")
+//          .head.asInstanceOf[Map[String, Any]]("BalanceDetails").asInstanceOf[List[Map[String, Any]]]
+//          .head("CurrentBalance")
+//    )
+//
+//
+//  //    .map(
+//  //      l => l.headOption.asInstanceOf[Some[Map[String, List[Any]]]]
+//  //        .get("BalanceDetails")
+//  //        .map(m => m.headOption.asInstanceOf[Map[String, Any]])
+//  //        .get("CurrentBalance")
+//  //    )
+//
+//  println(bal)
+//}
