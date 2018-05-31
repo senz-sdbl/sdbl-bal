@@ -48,20 +48,28 @@ class BalInqHandler extends Actor with AppConf with SenzLogger {
       logger.debug(s"balance inquery $agent $account")
 
       // call http endpoint
-      // remove trailing 0 before acc inq
       val f = doInq(account.replaceAll("^0*", ""))
       Try(Await.result(f, timeout.duration)) match {
         case Success(response) =>
           logger.info(s"inq response: $response")
 
-          val bal = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
-            .map(_ ("CustomerDetails")
-              .head.asInstanceOf[Map[String, Any]]("BalanceDetails").asInstanceOf[List[Map[String, Any]]]
-              .head("CurrentBalance"))
+          val json = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
+          val bal = json.flatMap(c =>
+            c("CustomerDetails")
+              .head.asInstanceOf[Map[String, Any]]
+              .get("BalanceDetails")
+              .flatMap(_.asInstanceOf[List[Map[String, Any]]].head.get("CurrentBalance").map(_.asInstanceOf[String])))
+          val name = json.flatMap(c =>
+            c("CustomerDetails")
+              .head.asInstanceOf[Map[String, Any]]
+              .get("FullOrDispName")
+              .map(_.asInstanceOf[String])
+          )
           logger.info(s"balance $bal")
+          logger.info(s"name $name")
 
           // return to sender
-          val senz = s"DATA #bal ${bal.getOrElse("")} @$agent ^$senzieName"
+          val senz = s"DATA #bal ${bal.getOrElse("")} #name ${name.map(_.replaceAll(" ", "|")).getOrElse("")} @$agent ^$senzieName"
           senzActor ! Msg(senz)
         case e =>
           logger.info(s"fail to complete acc inq $e")
@@ -84,3 +92,44 @@ class BalInqHandler extends Actor with AppConf with SenzLogger {
     }
   }
 }
+
+//object M extends App {
+//  val response =
+//    """
+//      |{"CustomerDetails":[{"CIF":"","NewNICNo":"","SuccessMsg":"No Records Found","ShortName":"","City":"","Gender":"","CustomerType":"","OldNICNo":"","Nationality":"","DOB":"","BalanceDetails":[{"CurrentBalance":"3444","MemoBalance":"","SuccessMsg":"No Records Found","AccountNumber":""}],"FullOrDispName":"eranga","BranchCode":""}]}
+//    """.stripMargin
+//
+//  // parse json
+//  //  val bal = for {
+//  //    Some(map: Map[String, List[Any]]) <- JSON.parseFull(response)
+//  //    Some(cl: List[Any]) <- map.get("CustomerDetails")
+//  //    Some(c: Map[String, Any]) <- map.get("CustomerDetails")
+//  //    Some(bl: List[Any]) <- c.get("BalanceDetails")
+//  //    Some(b: Map[String, Any]) <- bl.headOption
+//  //  } yield {
+//  //    b("CurrentBalance").asInstanceOf[String]
+//  //  }
+//
+//
+//  val json = JSON.parseFull(response).asInstanceOf[Some[Map[String, List[Any]]]]
+//  val bal = json.flatMap(c =>
+//    c("CustomerDetails")
+//      .head.asInstanceOf[Map[String, Any]]
+//      .get("BalanceDetails")
+//      .flatMap(_.asInstanceOf[List[Map[String, Any]]].head.get("CurrentBalance").map(_.asInstanceOf[String])))
+//
+//  //    .map(
+//  //      l => l.headOption.asInstanceOf[Some[Map[String, List[Any]]]]
+//  //        .get("BalanceDetails")
+//  //        .map(m => m.headOption.asInstanceOf[Map[String, Any]])
+//  //        .get("CurrentBalance")
+//  //    )
+//  val name = json.flatMap(c =>
+//    c("CustomerDetails")
+//      .head.asInstanceOf[Map[String, Any]]
+//      .get("FullOrDispName")
+//  )
+//
+//  println(bal)
+//  println(name)
+//}
